@@ -1,0 +1,234 @@
+# Hospital Management System (HMS) Plan
+
+## Overview
+
+This plan outlines the development of a Hospital Management System (HMS) using Next.js (frontend), Express.js (backend), and PostgreSQL (database). The system will streamline patient management, appointment scheduling, and billing, ensuring scalability, security, and compliance (e.g., HIPAA). This document summarizes requirements, schema, file structure, workflow, and development steps in brief.
+
+1. Requirements
+
+---
+
+- Core Modules: Patient Management, Appointment Scheduling, Billing, User Management.
+- User Roles: Admin (manage system), Doctor (view records), Patient (book appointments).
+- Features: Patient registration, appointment booking, billing/invoicing, role-based access, data security.
+- Tech Stack:
+  - Frontend: Next.js(latest) (App Router, Tailwind CSS, shadcn ui, reactbit).
+  - Backend: Express.js (REST APIs, JWT authentication).
+  - Database: PostgreSQL (via Prisma ORM).
+  - Deployment: Vercel (frontend), Render/AWS (backend), Supabase/Neon (PostgreSQL).
+- Compliance: Encrypt sensitive data, adhere to HIPAA/GDPR.
+
+2. Database Schema
+
+---
+
+- Users:
+  - Columns: id (PK, UUID), email (unique), password_hash, role (admin/doctor/patient), first_name, last_name, created_at, updated_at.
+  - Purpose: Authentication and role-based access.
+- Patients:
+  - Columns: id (PK, UUID), user_id (FK), date_of_birth, gender, phone, address, emergency_contact (JSONB), medical_history (JSONB), created_at, updated_at.
+  - Purpose: Store patient demographics and health records.
+- Doctors:
+  - Columns: id (PK, UUID), user_id (FK), specialization, license_number (unique), availability (JSONB), created_at, updated_at.
+  - Purpose: Manage doctor profiles and schedules.
+- Appointments:
+  - Columns: id (PK, UUID), patient_id (FK), doctor_id (FK), appointment_date, status (scheduled/completed/cancelled), notes, created_at, updated_at.
+  - Purpose: Schedule and track appointments.
+- Billing:
+  - Columns: id (PK, UUID), patient_id (FK), appointment_id (FK, nullable), amount (DECIMAL), description, status (pending/paid/overdue), issue_date, due_date, created_at, updated_at.
+  - Purpose: Handle invoices and payments.
+- Relationships:
+  - Users ↔ Patients/Doctors (1:1 via user_id).
+  - Patients/Doctors ↔ Appointments (1:many).
+  - Appointments ↔ Billing (1:1 or 1:many).
+- Indexes: On appointment_date, doctor_id, patient_id for performance.
+- Security: Encrypt sensitive fields (pgcrypto), row-level security, audit logs.
+
+3. File Structure
+
+{
+├── /frontend          # Next.js frontend
+├── /backend           # Express.js backend
+├── README.md          # Project documentation
+├── .gitignore         # Git ignore file (e.g., node_modules, .env)
+└── package.json       # Optional: If monorepo, manage both apps
+}
+
+---
+/frontend
+├── /app                   # App Router for pages and layouts
+│   ├── /api               # API routes (optional, for proxying to backend)
+│   │   ├── patients.tsx    # Proxy API for patient-related calls
+│   │   └── appointments.tsx # Proxy API for appointment-related calls
+│   ├── /dashboard         # Dashboard page (role-based views)
+│   │   ├── page.tsx       # Main dashboard page
+│   │   └── layout.tsx     # Dashboard-specific layout
+│   ├── /patients          # Patient management pages
+│   │   ├── page.tsx        # List patients
+│   │   ├── new/page.tsx  # Add new patient form
+│   │   └── [id]/page.tsx   # View/edit patient details
+│   ├── /appointments      # Appointment management pages
+│   │   ├── page.tsx        # Calendar/schedule view
+│   │   └── new/page.tsx    # Book new appointment
+│   ├── /billing           # Billing management pages
+│   │   ├── page.tsx        # Invoice list
+│   │   └── [id]/page.tsx   # View invoice details
+│   ├── globals.css        # Global styles (Tailwind CSS)
+│   ├── layout.tsx          # Root layout (shared across pages)
+│   └── page.tsx            # Home page (e.g., login or landing)
+├── /components            # Reusable React components
+│   ├── /forms             # Form components
+│   │   ├── PatientForm.tsx # Patient registration form
+│   │   └── AppointmentForm.tsx # Appointment booking form
+│   ├── /ui                # Shared UI elements (e.g., buttons, modals)
+│   │   ├── Button.tsx      # Custom button component
+│   │   └── Navbar.tsx      # Navigation bar
+│   └── /dashboard         # Dashboard-specific components
+│       └── Calendar.tsx    # FullCalendar for appointments
+├── /lib                   # Utilities and API helpers
+│   ├── api.ts           # Axios/fetch setup for backend API calls
+│   ├── auth.ts            # Authentication helpers (e.g., Clerk or JWT)
+│   └── constants.tsx       # App-wide constants (e.g., API URLs)
+├── /public                # Static assets
+│   ├── /images            # Logos, icons
+│   └── favicon.ico        # App favicon
+├── /styles                # Additional CSS (if not using Tailwind)
+│   └── tailwind.css       # Tailwind CSS configuration
+├── .env                   # Environment variables (e.g., API_URL)
+├── next.config.js         # Next.js configuration
+├── package.json           # Frontend dependencies
+├── tailwind.config.js     # Tailwind CSS setup
+└── README.md              # Frontend-specific docs
+/backend
+├── /src                   # Source code
+│   ├── /config            # Configuration files
+│   │   ├── database.js    # PostgreSQL connection setup (Prisma or Sequelize)
+│   │   └── env.js         # Environment variable loader
+│   ├── /controllers       # Business logic for API endpoints
+│   │   ├── patientController.js  # Handles patient CRUD
+│   │   ├── appointmentController.js # Handles appointment logic
+│   │   └── billingController.js  # Handles billing logic
+│   ├── /models            # Database schemas/models
+│   │   ├── Patient.js     # Patient model (Prisma schema or Sequelize)
+│   │   ├── Appointment.js # Appointment model
+│   │   └── Billing.js     # Billing model
+│   ├── /routes            # API route definitions
+│   │   ├── patients.js    # Patient-related routes (/api/patients)
+│   │   ├── appointments.js # Appointment routes (/api/appointments)
+│   │   ├── billing.js     # Billing routes (/api/billing)
+│   │   └── auth.js        # Authentication routes (/api/auth)
+│   ├── /middleware        # Custom middleware
+│   │   ├── auth.js        # JWT authentication
+│   │   ├── error.js       # Error handling
+│   │   └── validate.js    # Input validation (e.g., Joi)
+│   ├── /services          # Reusable business logic
+│   │   ├── patientService.js  # Patient-related operations
+│   │   └── emailService.js    # Email notifications (e.g., for appointments)
+│   ├── /utils             # Helper functions
+│   │   ├── logger.js      # Logging (e.g., Winston)
+│   │   └── constants.js   # API-wide constants
+│   └── server.js          # Main Express server setup
+├── /prisma                # Prisma-specific files (if using Prisma)
+│   ├── schema.prisma      # PostgreSQL schema definitions
+│   └── migrations         # Database migration files
+├── .env                   # Environment variables (e.g., DB credentials)
+├── package.json           # Backend dependencies
+├── nodemon.json           # Nodemon config for development
+└── README.md              # Backend-specific docs
+4. Workflow
+
+---
+
+- Patient Registration:
+  1. Patient signs up (Users table, role: patient).
+  2. Enters details (Patients table via frontend form).
+  3. Admin/Doctor views patient list (API: GET /patients).
+- Appointment Scheduling:
+  1. Patient selects doctor and time (checks Doctors.availability).
+  2. Books appointment (Appointments table via POST /appointments).
+  3. Doctor receives notification (email/SMS via backend service).
+  4. Status updates (e.g., completed, cancelled).
+- Billing:
+  1. System generates bill post-appointment (Billing table via POST /billing).
+  2. Patient views/pays bill (frontend: /billing/\[id\]).
+  3. Status updates to paid/overdue.
+- Admin Tasks:
+  1. Manage users (CRUD on Users, Doctors, Patients).
+  2. View analytics (e.g., appointment trends via GET /reports).
+- Security:
+  - JWT for role-based access (middleware checks role).
+  - Encrypt sensitive data (address, medical_history).
+  - Audit logs for changes.
+
+5. Development Steps
+
+---
+
+1. Setup:
+
+   - Install Node.js, PostgreSQL (local or Supabase), Prisma.
+   - Initialize projects: `npx create-next-app frontend`, `npm init` for backend.
+
+2. Database:
+
+   - Define schema in schema.prisma.
+   - Run migrations (prisma migrate dev).
+   - Seed test data (patients, doctors, appointments).
+
+3. Backend:
+
+   - Build Express APIs (/patients, /appointments, /billing, /auth).
+   - Add JWT middleware for authentication.
+   - Integrate Prisma for PostgreSQL queries.
+
+4. Frontend:
+
+   - Create pages (dashboard, patients, appointments, billing).
+   - Use Tailwind CSS for styling, FullCalendar for appointments.
+   - Connect to backend via fetch/Axios.
+
+5. Testing:
+
+   - Unit tests: Jest (frontend), Supertest (backend).
+   - Integration tests: API-to-frontend workflows.
+
+6. Deployment:
+
+   - Frontend: Vercel (free tier).
+   - Backend: Render/AWS.
+   - Database: Supabase/Neon.
+   - CI/CD: GitHub Actions for automated builds.
+
+7. Maintenance:
+
+   - Monitor with Sentry (errors), PostgreSQL logs (queries).
+   - Backup database regularly.
+
+8. Considerations
+
+---
+
+- Start with MVP: Patient registration and appointments.
+- Use JSONB for flexible fields (e.g., medical_history).
+- Optimize queries with indexes (e.g., appointment_date).
+- Ensure HIPAA compliance (encryption, access logs).
+- Budget: Free tiers for Vercel/Supabase; $10-50/month for hosting.
+
+---
+
+    Resources
+
+---
+
+- Next.js: nextjs.org
+- Express.js: expressjs.com
+- Prisma: prisma.io
+- GitHub: Search "hospital-management-system" for inspiration.
+- Tutorials: YouTube (Traversy Media, Net Ninja) for Next.js/Prisma.
+
+## Next Steps
+
+- Finalize module priorities (e.g., focus on appointments).
+- Set up repository (GitHub).
+- Begin with patient registration module.
+- Consult healthcare expert for compliance if production-grade.
