@@ -80,6 +80,12 @@ export default function BillingPage() {
   const [filteredBillings, setFilteredBillings] = useState<Billing[]>([]);
 
   useEffect(() => {
+    // Check authentication on component mount
+    const token = localStorage.getItem('authToken');
+    if (!token) {
+      window.location.href = '/auth/login';
+      return;
+    }
     fetchBillings();
   }, []);
 
@@ -113,10 +119,23 @@ export default function BillingPage() {
   const fetchBillings = async () => {
     try {
       setLoading(true);
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        window.location.href = '/auth/login';
+        return;
+      }
+      
       const response = await apiClient.getBillings();
-      setBillings(response.data);
+      setBillings(Array.isArray(response.data) ? response.data : []);
     } catch (error: any) {
+      console.error('Billing fetch error:', error);
+      if (error.status === 401) {
+        // Unauthorized - redirect to login
+        window.location.href = '/auth/login';
+        return;
+      }
       toast.error(error.message || 'Failed to fetch billings');
+      setBillings([]); // Set empty array on error
     } finally {
       setLoading(false);
     }
@@ -126,18 +145,29 @@ export default function BillingPage() {
     if (!confirm('Are you sure you want to delete this billing record?')) return;
 
     try {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        window.location.href = '/auth/login';
+        return;
+      }
+      
       await apiClient.deleteBilling(id);
       toast.success('Billing deleted successfully');
       fetchBillings();
     } catch (error: any) {
+      console.error('Delete billing error:', error);
+      if (error.status === 401) {
+        window.location.href = '/auth/login';
+        return;
+      }
       toast.error(error.message || 'Failed to delete billing');
     }
   };
 
   const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-IN', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'INR'
     }).format(amount);
   };
 
@@ -198,20 +228,18 @@ export default function BillingPage() {
   }
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="container mx-auto py-8 bg-[linear-gradient(135deg,var(--pink-50),var(--blue-50))]">
       {/* Header */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
         <div>
-          <h1 className="text-3xl font-bold flex items-center gap-2">
-            <CreditCard className="h-8 w-8" />
+          <h1 className="text-3xl font-extrabold tracking-tight text-gradient-accent flex items-center gap-2">
+            <CreditCard className="h-8 w-8 text-blue-500" />
             Billing & Payments
           </h1>
-          <p className="text-muted-foreground">
-            Manage invoices, payments, and billing records
-          </p>
+          <p className="text-gray-600 mt-1">Manage invoices, payments, and billing records</p>
         </div>
         <Link href="/billing/create">
-          <Button>
+          <Button className="bg-blue-500 hover:bg-blue-500/90 text-white shadow-soft">
             <Plus className="h-4 w-4 mr-2" />
             Create Invoice
           </Button>
@@ -219,8 +247,8 @@ export default function BillingPage() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <Card>
+      <div className="grid card-grid-responsive gap-4 mb-6">
+        <Card className="elevate-card bg-white/70 backdrop-blur border border-white/60">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
             <DollarSign className="h-4 w-4 text-muted-foreground" />
@@ -231,7 +259,7 @@ export default function BillingPage() {
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="elevate-card bg-white/70 backdrop-blur border border-white/60">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Pending Payments</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
@@ -242,7 +270,7 @@ export default function BillingPage() {
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="elevate-card bg-white/70 backdrop-blur border border-white/60">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Overdue Payments</CardTitle>
             <XCircle className="h-4 w-4 text-muted-foreground" />
@@ -253,7 +281,7 @@ export default function BillingPage() {
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="elevate-card bg-white/70 backdrop-blur border border-white/60">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Total Invoices</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
@@ -265,7 +293,7 @@ export default function BillingPage() {
       </div>
 
       {/* Search and Filters */}
-      <Card className="mb-6">
+      <Card className="mb-6 elevate-card bg-white/70 backdrop-blur border border-white/60">
         <CardHeader>
           <CardTitle>Billing Records</CardTitle>
           <CardDescription>
@@ -299,7 +327,7 @@ export default function BillingPage() {
           </div>
 
           {/* Billing Table */}
-          <div className="rounded-md border">
+          <div className="rounded-md border border-white/60 bg-white/60 backdrop-blur shadow-soft overflow-x-auto">
             <Table>
               <TableHeader>
                 <TableRow>
@@ -330,7 +358,7 @@ export default function BillingPage() {
                     const displayStatus = isOverdue ? 'OVERDUE' : billing.status;
                     
                     return (
-                      <TableRow key={billing.id}>
+                      <TableRow key={billing.id} className="hover:bg-pink-50/60 transition-colors">
                         <TableCell>
                           <div className="flex items-center gap-2">
                             <User className="h-4 w-4 text-muted-foreground" />
@@ -363,7 +391,7 @@ export default function BillingPage() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <Badge className={`${getStatusBadgeColor(displayStatus, billing.dueDate)} flex items-center gap-1 w-fit`}>
+                          <Badge className={`${getStatusBadgeColor(displayStatus, billing.dueDate)} flex items-center gap-1 w-fit shadow-soft`}>
                             {getStatusIcon(displayStatus)}
                             {displayStatus}
                           </Badge>

@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { toast } from 'sonner';
+import { formatCurrency } from '@/lib/currency';
 import apiClient from '@/lib/api-client';
 import { CreditCard, ArrowLeft, User, Calendar, DollarSign } from 'lucide-react';
 import Link from 'next/link';
@@ -93,10 +94,13 @@ export default function CreateBillingPage() {
         apiClient.getAppointments()
       ]);
       
-      setPatients(patientsResponse.data);
-      setAppointments(appointmentsResponse.data);
+      setPatients(Array.isArray(patientsResponse.data) ? patientsResponse.data : []);
+      setAppointments(Array.isArray(appointmentsResponse.data) ? appointmentsResponse.data : []);
     } catch (error: any) {
+      console.error('Error fetching initial data:', error);
       toast.error(error.message || 'Failed to fetch data');
+      setPatients([]);
+      setAppointments([]);
     } finally {
       setLoading(false);
     }
@@ -212,7 +216,7 @@ export default function CreateBillingPage() {
                     <SelectValue placeholder="Select a patient" />
                   </SelectTrigger>
                   <SelectContent>
-                    {patients.map((patient) => (
+                    {Array.isArray(patients) && patients.map((patient) => (
                       <SelectItem key={patient.id} value={patient.id}>
                         {patient.user.firstName} {patient.user.lastName} ({patient.user.email})
                       </SelectItem>
@@ -237,7 +241,7 @@ export default function CreateBillingPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">No appointment</SelectItem>
-                    {selectedPatientAppointments.map((appointment) => (
+                    {Array.isArray(selectedPatientAppointments) && selectedPatientAppointments.map((appointment) => (
                       <SelectItem key={appointment.id} value={appointment.id}>
                         {new Date(appointment.scheduledAt).toLocaleDateString()} - {appointment.reason}
                       </SelectItem>
@@ -326,7 +330,7 @@ export default function CreateBillingPage() {
                     <div className="flex justify-between">
                       <span>Amount:</span>
                       <span className="font-medium text-lg">
-                        ${parseFloat(formData.amount || '0').toFixed(2)}
+                        {formatCurrency(parseFloat(formData.amount || '0'))}
                       </span>
                     </div>
                     <div className="flex justify-between">

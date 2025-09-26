@@ -1,108 +1,144 @@
 'use client'
 
-import { useUser, useAuth } from '@clerk/nextjs'
 import { UserRole } from '@/lib/constants'
 import { useState, useEffect } from 'react'
 
-// Type definition for our hospital user data stored in Clerk metadata
+// Type definition for our hospital user data
 export interface HospitalUserData {
+  id: string
+  email: string
+  firstName: string
+  lastName: string
   role: UserRole
   hospitalId?: string
   department?: string
 }
 
+// Type for authentication state
+export interface AuthState {
+  user: HospitalUserData | null
+  isLoaded: boolean
+  isSignedIn: boolean
+  token: string | null
+}
+
 // Client-side authentication hooks for React components
-export function useHospitalAuth() {
-  const { user, isLoaded: userLoaded } = useUser()
-  const { isSignedIn, signOut, isLoaded: authLoaded } = useAuth()
-  const [isMounted, setIsMounted] = useState(false)
+export function useHospitalAuth(): AuthState & {
+  role: UserRole
+  hospitalId?: string
+  department?: string
+  signOut: () => void
+  hasRole: (role: UserRole) => boolean
+  hasAnyRole: (roles: UserRole[]) => boolean
+  fullName: string
+  email: string
+} {
+  const [authState, setAuthState] = useState<AuthState>({
+    user: null,
+    isLoaded: false,
+    isSignedIn: false,
+    token: null
+  })
 
   useEffect(() => {
-    setIsMounted(true)
+    // Initialize auth state from localStorage
+    const token = localStorage.getItem('authToken')
+    const userStr = localStorage.getItem('user')
+    
+    if (token && userStr) {
+      try {
+        const user = JSON.parse(userStr) as HospitalUserData
+        setAuthState({
+          user,
+          isLoaded: true,
+          isSignedIn: true,
+          token
+        })
+      } catch (error) {
+        console.error('Error parsing user data:', error)
+        // Invalid user data, clear storage
+        localStorage.removeItem('authToken')
+        localStorage.removeItem('user')
+        setAuthState({
+          user: null,
+          isLoaded: true,
+          isSignedIn: false,
+          token: null
+        })
+      }
+    } else {
+      setAuthState({
+        user: null,
+        isLoaded: true,
+        isSignedIn: false,
+        token: null
+      })
+    }
   }, [])
 
-  const hospitalData = user?.publicMetadata as HospitalUserData | undefined
+  const signOut = () => {
+    localStorage.removeItem('authToken')
+    localStorage.removeItem('user')
+    setAuthState({
+      user: null,
+      isLoaded: true,
+      isSignedIn: false,
+      token: null
+    })
+  }
   
   return {
-    // User data
-    user,
-    isSignedIn,
-    isLoaded: isMounted && userLoaded && authLoaded,
+    // Auth state
+    ...authState,
     
     // Hospital-specific data
-    role: hospitalData?.role,
-    hospitalId: hospitalData?.hospitalId,
-    department: hospitalData?.department,
+    role: authState.user?.role || 'PATIENT',
+    hospitalId: authState.user?.hospitalId,
+    department: authState.user?.department || (authState.user?.role === 'DOCTOR' ? 'General' : undefined),
     
     // Auth actions
     signOut,
     
     // Role checking
-    hasRole: (role: UserRole) => hospitalData?.role === role,
-    hasAnyRole: (roles: UserRole[]) => roles.includes(hospitalData?.role || '' as UserRole),
+    hasRole: (role: UserRole) => authState.user?.role === role,
+    hasAnyRole: (roles: UserRole[]) => roles.includes(authState.user?.role || 'PATIENT'),
     
     // Formatted user info
-    fullName: user ? `${user.firstName} ${user.lastName}` : '',
-    email: user?.primaryEmailAddress?.emailAddress || '',
+    fullName: authState.user ? `${authState.user.firstName} ${authState.user.lastName}` : '',
+    email: authState.user?.email || '',
   }
 }
 
-// Server-side authentication utilities (for API routes and server components)
-export const authUtils = {
-  // These functions are now handled by Clerk's built-in components and hooks
-  // No longer needed: login, register, setAuth, getToken, etc.
-  
-  // Legacy compatibility (deprecated - use Clerk hooks instead)
-  isAuthenticated: (): boolean => {
-    console.warn('authUtils.isAuthenticated is deprecated. Use useAuth hook from @clerk/nextjs instead.')
-    return false // Server-side check not available in client utils
-  },
-
-  hasRole: (role: UserRole): boolean => {
-    console.warn('authUtils.hasRole is deprecated. Use useHospitalAuth hook instead.')
-    return false // Server-side check not available in client utils
-  },
+// Role checking utilities for server-side use
+export const hasRole = (userRole: string, requiredRole: UserRole): boolean => {
+  return userRole === requiredRole
 }
 
-// Backward compatibility (deprecated)
-export const authService = {
-  login: async (): Promise<never> => {
-    throw new Error('authService.login is deprecated. Use Clerk SignIn component or signIn from @clerk/nextjs instead.')
-  },
-
-  register: async (): Promise<never> => {
-    throw new Error('authService.register is deprecated. Use Clerk SignUp component or signUp from @clerk/nextjs instead.')
-  },
-
-  logout: () => {
-    console.warn('authService.logout is deprecated. Use signOut from @clerk/nextjs instead.')
-    // Legacy support - redirect to sign out
-    window.location.href = '/sign-in'
-  },
-
-  getUser: () => {
-    console.warn('authService.getUser is deprecated. Use useUser hook from @clerk/nextjs instead.')
-    return null
-  },
-
-  getToken: () => {
-    console.warn('authService.getToken is deprecated. Use getToken from @clerk/nextjs instead.')
-    return null
-  },
-
-  setAuth: () => {
-    console.warn('authService.setAuth is deprecated. Clerk handles authentication automatically.')
-  },
-
-  isAuthenticated: () => {
-    console.warn('authService.isAuthenticated is deprecated. Use isSignedIn from @clerk/nextjs instead.')
-    return false
-  },
-
-  hasRole: () => {
-    console.warn('authService.hasRole is deprecated. Use useHospitalAuth hook instead.')
-    return false
-  },
+export const hasAnyRole = (userRole: string, roles: UserRole[]): boolean => {
+  return roles.includes(userRole as UserRole)
 }
 
-export default authService
+export const isAdmin = (userRole: string): boolean => {
+  return userRole === 'ADMIN'
+}
+
+export const isDoctor = (userRole: string): boolean => {
+  return userRole === 'DOCTOR'
+}
+
+export const isPatient = (userRole: string): boolean => {
+  return userRole === 'PATIENT'
+}
+
+// Utility function to get user from token
+export const getUserFromToken = (token: string): HospitalUserData | null => {
+  try {
+    const userStr = localStorage.getItem('user')
+    if (!userStr) return null
+    
+    return JSON.parse(userStr) as HospitalUserData
+  } catch (error) {
+    console.error('Error parsing user from token:', error)
+    return null
+  }
+}

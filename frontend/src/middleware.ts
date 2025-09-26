@@ -1,71 +1,43 @@
-import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
 
-// Define public routes that don't require authentication
-const isPublicRoute = createRouteMatcher([
-  '/',
-  '/api/health(.*)',
-  '/sign-in(.*)',
-  '/sign-up(.*)',
-])
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl
 
-// Define protected routes that require authentication
-const isProtectedRoute = createRouteMatcher([
-  '/dashboard(.*)',
-  '/patients(.*)',
-  '/doctors(.*)',
-  '/appointments(.*)',
-  '/billing(.*)',
-  '/api/patients(.*)',
-  '/api/doctors(.*)',
-  '/api/appointments(.*)',
-  '/api/billing(.*)',
-])
+  // Define public routes that don't require authentication
+  const publicRoutes = [
+    '/',
+    '/auth/login',
+    '/auth/register',
+    '/api/health',
+  ]
 
-// Define Clerk component routes (require auth but have special handling)
-const isClerkRoute = createRouteMatcher([
-  '/settings(.*)',
-])
+  // Define protected routes that require authentication
+  const protectedRoutes = [
+    '/dashboard',
+    '/patients',
+    '/doctors',
+    '/billing',
+    '/settings'
+  ]
 
-export default clerkMiddleware(async (auth, req) => {
-  try {
-    // Allow public routes to proceed without authentication
-    if (isPublicRoute(req)) {
-      return NextResponse.next()
-    }
+  // Check if the route is public
+  const isPublicRoute = publicRoutes.some(route => 
+    pathname === route || pathname.startsWith(route + '/')
+  )
 
-    // Handle Clerk component routes (like settings)
-    if (isClerkRoute(req)) {
-      const { userId } = await auth()
-      if (!userId) {
-        // Redirect to sign-in page with return URL
-        const signInUrl = new URL('/sign-in', req.url)
-        signInUrl.searchParams.set('redirect_url', req.url)
-        return NextResponse.redirect(signInUrl)
-      }
-      // Allow authenticated users to access Clerk routes
-      return NextResponse.next()
-    }
+  // Check if the route is protected
+  const isProtectedRoute = protectedRoutes.some(route =>
+    pathname.startsWith(route)
+  )
 
-    // Protect routes that require authentication
-    if (isProtectedRoute(req)) {
-      const { userId } = await auth()
-      if (!userId) {
-        // Redirect to sign-in page with return URL
-        const signInUrl = new URL('/sign-in', req.url)
-        signInUrl.searchParams.set('redirect_url', req.url)
-        return NextResponse.redirect(signInUrl)
-      }
-    }
-
-    // Allow other routes to proceed
-    return NextResponse.next()
-  } catch (error) {
-    console.error('Middleware error:', error)
-    // Fallback: allow request to proceed to avoid breaking the app
-    return NextResponse.next()
-  }
-})
+  // For our client-side authentication system, we'll let all routes through
+  // and handle authentication checks in the individual page components
+  // This is because we can't access localStorage from server-side middleware
+  
+  // Allow access to all routes (auth will be handled client-side)
+  return NextResponse.next()
+}
 
 export const config = {
   matcher: [

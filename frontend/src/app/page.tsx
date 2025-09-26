@@ -1,22 +1,46 @@
-import { AuthSection } from '@/components/auth/AuthSection'
+'use client'
+
+import { useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import { Activity, Shield, Users, Calendar } from 'lucide-react'
+import Link from 'next/link'
 
 export default function HomePage() {
-  return (
-    <div className="space-y-8">
-      {/* Hero Section */}
-      <div className="text-center space-y-4">
-        <h1 className="text-4xl font-bold text-foreground">
-          Hospital Management System
-        </h1>
-        <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-          A comprehensive healthcare management platform built with modern security and HIPAA compliance
-        </p>
-      </div>
+  const router = useRouter()
 
-      {/* Authentication State */}
-      <AuthSection />
+  useEffect(() => {
+    // Check if user is authenticated
+    const token = localStorage.getItem('authToken')
+    if (token) {
+      // Redirect to dashboard if already logged in
+      router.push('/dashboard')
+    }
+  }, [router])
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-6xl mx-auto px-4 py-12 space-y-8">
+        {/* Hero Section */}
+        <div className="text-center space-y-4">
+          <h1 className="text-4xl font-bold text-foreground">
+            Hospital Management System
+          </h1>
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+            A comprehensive healthcare management platform built with modern security and HIPAA compliance
+          </p>
+          
+          {/* Call to Action */}
+          <div className="flex justify-center gap-4 mt-8">
+            <Link href="/auth/login">
+              <Button size="lg">Sign In</Button>
+            </Link>
+            <Link href="/auth/register">
+              <Button variant="outline" size="lg">Create Account</Button>
+            </Link>
+          </div>
+        </div>
 
       {/* Features Grid */}
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -77,26 +101,27 @@ export default function HomePage() {
         </Card>
       </div>
 
-      {/* Security Note */}
-      <div className="max-w-4xl mx-auto">
-        <Card>
-          <CardHeader>
-            <CardTitle>🔒 Enhanced Security with Clerk</CardTitle>
-            <CardDescription>
-              This application now uses Clerk for modern, secure authentication with the following benefits:
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <ul className="list-disc list-inside text-sm space-y-1 text-muted-foreground">
-              <li>Multi-factor authentication (MFA) support</li>
-              <li>Social login providers (Google, Microsoft, etc.)</li>
-              <li>Passwordless authentication options</li>
-              <li>Role-based access control with hospital-specific metadata</li>
-              <li>Session management and security monitoring</li>
-              <li>HIPAA-compliant user data handling</li>
-            </ul>
-          </CardContent>
-        </Card>
+        {/* Security Note */}
+        <div className="max-w-4xl mx-auto">
+          <Card>
+            <CardHeader>
+              <CardTitle>🔒 Enhanced Security & Features</CardTitle>
+              <CardDescription>
+                This application provides comprehensive hospital management with the following security features:
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <ul className="list-disc list-inside text-sm space-y-1 text-muted-foreground">
+                <li>Secure JWT-based authentication</li>
+                <li>Role-based access control (Admin, Doctor, Patient)</li>
+                <li>Comprehensive audit logging for HIPAA compliance</li>
+                <li>Real-time dashboard with database integration</li>
+                <li>Patient management and billing system</li>
+                <li>Secure API endpoints with input validation</li>
+              </ul>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </div>
   )

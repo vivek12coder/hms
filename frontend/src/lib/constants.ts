@@ -2,18 +2,13 @@ export const APP_NAME = 'Hospital Management System';
 export const APP_VERSION = '1.0.0';
 
 export const USER_ROLES = {
-  ADMIN: 'admin',
-  DOCTOR: 'doctor',
-  PATIENT: 'patient',
+  ADMIN: 'ADMIN',
+  DOCTOR: 'DOCTOR',
+  PATIENT: 'PATIENT',
+  RECEPTIONIST: 'RECEPTIONIST',
 } as const;
 
 export type UserRole = typeof USER_ROLES[keyof typeof USER_ROLES];
-
-export const APPOINTMENT_STATUS = {
-  SCHEDULED: 'scheduled',
-  COMPLETED: 'completed',
-  CANCELLED: 'cancelled',
-} as const;
 
 export const BILLING_STATUS = {
   PENDING: 'pending',
@@ -55,5 +50,4 @@ export const API_ENDPOINTS = {
   API_URL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api',
 };
 
-export type AppointmentStatus = typeof APPOINTMENT_STATUS[keyof typeof APPOINTMENT_STATUS];
 export type BillingStatus = typeof BILLING_STATUS[keyof typeof BILLING_STATUS];

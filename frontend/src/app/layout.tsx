@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
-import { ClerkProvider } from "@clerk/nextjs";
-import { Navbar } from "@/components/layout/Navbar";
+import { UniversalNavbar } from "@/components/layout/UniversalNavbar";
 import { AppErrorBoundary } from "@/components/ErrorBoundary";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 const inter = Inter({
@@ -20,17 +20,16 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <ClerkProvider>
-      <html lang="en">
-        <body className={`${inter.className} antialiased`}>
-          <AppErrorBoundary>
-            <Navbar />
-            <main className="container mx-auto px-4 py-8">
-              {children}
-            </main>
-          </AppErrorBoundary>
-        </body>
-      </html>
-    </ClerkProvider>
+    <html lang="en">
+      <body className={`${inter.className} antialiased`}>
+        <AppErrorBoundary>
+          <UniversalNavbar />
+          <main className="container mx-auto px-4 py-8">
+            {children}
+          </main>
+        </AppErrorBoundary>
+        <Toaster />
+      </body>
+    </html>
   );
 }

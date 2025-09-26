@@ -1,185 +1,294 @@
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3002/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 class ApiError extends Error {
-  constructor(public status: number, public message: string) {
+  retryAfter?: number; // seconds
+  rawBody?: any;
+  constructor(public status: number, message: string, opts: { retryAfter?: number; rawBody?: any } = {}) {
     super(message);
     this.name = 'ApiError';
+    this.retryAfter = opts.retryAfter;
+    this.rawBody = opts.rawBody;
   }
 }
 
-export const apiClient = {
-  async request<T>(endpoint: string, options: RequestInit = {}, token?: string): Promise<T> {
+// API endpoints for easy reference
+export const endpoints = {
+  auth: {
+    login: '/api/auth/login',
+    register: '/api/auth/register',
+    me: '/api/auth/me',
+  },
+  patients: {
+    list: '/api/patients',
+    create: '/api/patients',
+    getById: (id: string) => `/api/patients/${id}`,
+    update: (id: string) => `/api/patients/${id}`,
+    delete: (id: string) => `/api/patients/${id}`,
+  },
+  doctors: {
+    list: '/api/doctors',
+    create: '/api/doctors',
+    getById: (id: string) => `/api/doctors/${id}`,
+    update: (id: string) => `/api/doctors/${id}`,
+    availability: (id: string) => `/api/doctors/${id}/availability`,
+  },
+  appointments: {
+    list: '/api/appointments',
+    create: '/api/appointments',
+    getById: (id: string) => `/api/appointments/${id}`,
+    update: (id: string) => `/api/appointments/${id}`,
+    delete: (id: string) => `/api/appointments/${id}`,
+    byPatient: (patientId: string) => `/api/appointments/patient/${patientId}`,
+    byDoctor: (doctorId: string) => `/api/appointments/doctor/${doctorId}`,
+  },
+  billing: {
+    list: '/api/billing',
+    create: '/api/billing',
+    getById: (id: string) => `/api/billing/${id}`,
+    update: (id: string) => `/api/billing/${id}`,
+    byPatient: (patientId: string) => `/api/billing/patient/${patientId}`,
+  },
+};
+
+class ApiClient {
+  private lastResponseHeaders: Headers | null = null;
+
+  getLastHeader(name: string): string | null {
+    return this.lastResponseHeaders?.get(name) || null;
+  }
+
+  getRateLimitInfo() {
+    if (!this.lastResponseHeaders) return null;
+    return {
+      limit: this.lastResponseHeaders.get('RateLimit-Limit') || this.lastResponseHeaders.get('X-RateLimit-Limit'),
+      remaining: this.lastResponseHeaders.get('RateLimit-Remaining') || this.lastResponseHeaders.get('X-RateLimit-Remaining'),
+      reset: this.lastResponseHeaders.get('RateLimit-Reset') || this.lastResponseHeaders.get('X-RateLimit-Reset')
+    };
+  }
+  private getAuthToken(): string | null {
+    if (typeof window === 'undefined') return null;
+    return localStorage.getItem('authToken');
+  }
+
+  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
+    const token = this.getAuthToken();
     
     const config: RequestInit = {
       headers: {
         'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
         ...options.headers,
       },
       ...options,
     };
 
-    if (token) {
-      config.headers = {
-        ...config.headers,
-        Authorization: `Bearer ${token}`,
-      };
-    }
-
     try {
-      const response = await fetch(url, config);
-      const data = await response.json();
-
+      console.log(`🚀 API Request: ${options.method || 'GET'} ${url}`);
+      
+  const response = await fetch(url, config);
+  this.lastResponseHeaders = response.headers;
+      
       if (!response.ok) {
-        throw new ApiError(response.status, data.message || 'API Error');
+        const retryAfterHeader = response.headers.get('Retry-After');
+        const retryAfter = retryAfterHeader ? parseInt(retryAfterHeader, 10) : undefined;
+        const errorData = await response.json().catch(() => ({ message: 'Unknown error' }));
+        const message = errorData.message || errorData.error || `HTTP ${response.status}`;
+        throw new ApiError(response.status, message, { retryAfter, rawBody: errorData });
       }
 
+      const data = await response.json();
+      console.log(`✅ API Response: ${options.method || 'GET'} ${url}`, data);
       return data;
     } catch (error) {
+      console.error(`❌ API Error: ${options.method || 'GET'} ${url}`, error);
+      
       if (error instanceof ApiError) {
         throw error;
       }
-      throw new ApiError(500, 'Network error');
+      
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new ApiError(500, `Connection failed: Unable to connect to backend server at ${API_BASE_URL}`);
+      }
+      
+      throw new ApiError(500, `Network error: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
-  },
+  }
 
-  // Authentication
+  // Generic HTTP Methods
+  async get<T = any>(endpoint: string): Promise<T> {
+    return this.request<T>(endpoint, { method: 'GET' });
+  }
+
+  async post<T = any>(endpoint: string, data?: any): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: 'POST',
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
+  async put<T = any>(endpoint: string, data?: any): Promise<T> {
+    return this.request<T>(endpoint, {
+      method: 'PUT',
+      body: data ? JSON.stringify(data) : undefined,
+    });
+  }
+
+  async delete<T = any>(endpoint: string): Promise<T> {
+    return this.request<T>(endpoint, { method: 'DELETE' });
+  }
+
+  // Authentication Methods
   async login(email: string, password: string) {
-    return this.request<{success: boolean; data: {token: string; user: any}}>('/auth/login', {
+    return this.request<{success: boolean; data: {token: string; user: any}}>('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
-  },
+  }
 
   async register(userData: any) {
-    return this.request<{success: boolean; data: any; message: string}>('/auth/register', {
+    return this.request<{success: boolean; data: any; message: string}>('/api/auth/register', {
       method: 'POST',
       body: JSON.stringify(userData),
     });
-  },
+  }
 
-  // Patients
-  async getPatients(token?: string) {
-    return this.request<{success: boolean; data: any[]; count: number}>('/patients', {}, token);
-  },
+  // Dashboard Methods
+  async getDashboardStats() {
+    return this.get<{
+      success: boolean;
+      data: {
+        stats: {
+          totalPatients: number;
+          totalDoctors: number;
+          todaysAppointments: number;
+          pendingBills: number;
+          pendingBillsAmount: number;
+          monthlyRevenue: number;
+          overdueBills?: number;
+        };
+        recentAppointments: Array<{
+          id: string;
+          patientName: string;
+          doctorName: string;
+          time: string;
+          status: string;
+          amount: number;
+          description: string;
+        }>;
+        alerts: Array<{
+          id: string;
+          message: string;
+          type: 'error' | 'warning' | 'info';
+        }>;
+      } | any;
+    }>('/api/dashboard/stats');
+  }
 
-  async getPatient(id: string, token?: string) {
-    return this.request<{success: boolean; data: any}>(`/patients/${id}`, {}, token);
-  },
+  async getPatientGrowthData() {
+    return this.get<{success: boolean; data: Record<string, number>}>('/api/dashboard/patient-growth');
+  }
 
-  async createPatient(patientData: any, token: string) {
-    return this.request<{success: boolean; data: any; message: string}>('/patients', {
-      method: 'POST',
-      body: JSON.stringify(patientData),
-    }, token);
-  },
+  async getRevenueData() {
+    return this.get<{success: boolean; data: Record<string, number>}>('/api/dashboard/revenue');
+  }
 
-  async updatePatient(id: string, patientData: any, token: string) {
-    return this.request<{success: boolean; data: any; message: string}>(`/patients/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(patientData),
-    }, token);
-  },
+  // Patient Methods
+  async getPatients(options: {page?: number; limit?: number; search?: string} = {}) {
+    const params = new URLSearchParams();
+    params.append('page', (options.page || 1).toString());
+    params.append('limit', (options.limit || 10).toString());
+    if (options.search) params.append('search', options.search);
+    
+    return this.get<{success: boolean; data: any[]; count: number}>(`/api/patients?${params}`);
+  }
 
-  async deletePatient(id: string, token: string) {
-    return this.request<{success: boolean; message: string}>(`/patients/${id}`, {
-      method: 'DELETE',
-    }, token);
-  },
+  async getPatient(id: string) {
+    return this.get<{success: boolean; data: any}>(`/api/patients/${id}`);
+  }
 
-  // Doctors
-  async getDoctors(token?: string) {
-    return this.request<{success: boolean; data: any[]; count: number}>('/doctors', {}, token);
-  },
+  async createPatient(patientData: any) {
+    return this.post<{success: boolean; data: any; message: string}>('/api/patients', patientData);
+  }
 
-  async getDoctor(id: string, token?: string) {
-    return this.request<{success: boolean; data: any}>(`/doctors/${id}`, {}, token);
-  },
+  async updatePatient(id: string, patientData: any) {
+    return this.put<{success: boolean; data: any}>(`/api/patients/${id}`, patientData);
+  }
 
-  async getDoctorsBySpecialization(specialization?: string) {
-    const query = specialization ? `?specialization=${encodeURIComponent(specialization)}` : '';
-    return this.request<{success: boolean; data: any[]; count: number}>(`/doctors/specialization${query}`);
-  },
+  async deletePatient(id: string) {
+    return this.delete<{success: boolean; message: string}>(`/api/patients/${id}`);
+  }
 
-  // Appointments
-  async getAppointments() {
-    return this.request<{success: boolean; data: any[]; count: number}>('/appointments');
-  },
+  // Doctor Methods
+  async getDoctors() {
+    return this.get<{success: boolean; data: {doctors: any[]; pagination: any}}>('/api/doctors');
+  }
 
-  async getAppointment(id: string) {
-    return this.request<{success: boolean; data: any}>(`/appointments/${id}`);
-  },
+  async getDoctor(id: string) {
+    return this.get<{success: boolean; data: any}>(`/api/doctors/${id}`);
+  }
 
-  async createAppointment(appointmentData: any) {
-    return this.request<{success: boolean; data: any; message: string}>('/appointments', {
-      method: 'POST',
-      body: JSON.stringify(appointmentData),
-    });
-  },
-
-  async updateAppointment(id: string, appointmentData: any) {
-    return this.request<{success: boolean; data: any; message: string}>(`/appointments/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(appointmentData),
-    });
-  },
-
-  async getPatientAppointments(patientId: string) {
-    return this.request<{success: boolean; data: any[]; count: number}>(`/appointments/patient/${patientId}`);
-  },
-
-  async getDoctorAppointments(doctorId: string) {
-    return this.request<{success: boolean; data: any[]; count: number}>(`/appointments/doctor/${doctorId}`);
-  },
-
-  // Billing
-  async getBillings() {
-    return this.request<{success: boolean; data: any[]; count: number}>('/billing');
-  },
-
+  // Billing Methods
   async getBillingRecords() {
-    return this.request<{success: boolean; data: any[]; count: number}>('/billing');
-  },
+    return this.get<{success: boolean; data: any[]}>('/api/billing');
+  }
 
-  async getBillingRecord(id: string) {
-    return this.request<{success: boolean; data: any}>(`/billing/${id}`);
-  },
+  async getBillings() {
+    return this.get<{success: boolean; data: any[]}>('/api/billing');
+  }
 
-  async createBillingRecord(billingData: any) {
-    return this.request<{success: boolean; data: any; message: string}>('/billing', {
-      method: 'POST',
-      body: JSON.stringify(billingData),
-    });
-  },
+  async createBill(billData: any) {
+    return this.post<{success: boolean; data: any}>('/api/billing', billData);
+  }
 
-  async updateBillingRecord(id: string, billingData: any) {
-    return this.request<{success: boolean; data: any; message: string}>(`/billing/${id}`, {
-      method: 'PUT',
-      body: JSON.stringify(billingData),
-    });
-  },
+  // Alias used by billing create page
+  async createBillingRecord(billData: any) {
+    return this.createBill(billData);
+  }
+
+  async updateBill(id: string, billData: any) {
+    return this.put<{success: boolean; data: any}>(`/api/billing/${id}`, billData);
+  }
 
   async deleteBilling(id: string) {
-    return this.request<{success: boolean; message: string}>(`/billing/${id}`, {
-      method: 'DELETE',
-    });
-  },
+    return this.delete<{success: boolean; message: string}>(`/api/billing/${id}`);
+  }
 
-  async markBillingAsPaid(id: string) {
-    return this.request<{success: boolean; data: any; message: string}>(`/billing/${id}/pay`, {
-      method: 'POST',
-    });
-  },
+  // Appointment Methods
+  async getAppointments() {
+    return this.get<{success: boolean; data: any[]}>('/api/appointments');
+  }
 
+  async createAppointment(appointmentData: any) {
+    return this.post<{success: boolean; data: any}>('/api/appointments', appointmentData);
+  }
+
+  async updateAppointment(id: string, appointmentData: any) {
+    return this.put<{success: boolean; data: any}>(`/api/appointments/${id}`, appointmentData);
+  }
+
+  async cancelAppointment(id: string) {
+    return this.delete<{success: boolean; message: string}>(`/api/appointments/${id}`);
+  }
+
+  // Prescription Methods
+  async getPrescriptions() {
+    return this.get<{success: boolean; data: any[]}>('/api/prescriptions');
+  }
+
+  async requestPrescriptionRefill(refillData: any) {
+    return this.post<{success: boolean; data: any}>('/api/prescriptions/refill', refillData);
+  }
+
+  async getPrescriptionRefills() {
+    return this.get<{success: boolean; data: any[]}>('/api/prescriptions/refills');
+  }
+
+  // Patient-specific Methods
   async getPatientBillingRecords(patientId: string) {
-    return this.request<{success: boolean; data: {billingRecords: any[]; summary: any}}>(`/billing/patient/${patientId}`);
-  },
+    return this.get<{success: boolean; data: {billingRecords: any[]}}>(`/api/billing/patient/${patientId}`);
+  }
+}
 
-  async deleteAppointment(id: string) {
-    return this.request<{success: boolean; message: string}>(`/appointments/${id}`, {
-      method: 'DELETE',
-    });
-  },
-};
-
+export const apiClient = new ApiClient();
 export default apiClient;

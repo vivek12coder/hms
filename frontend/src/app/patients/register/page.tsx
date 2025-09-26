@@ -12,7 +12,6 @@ import { toast } from 'sonner';
 import apiClient from '@/lib/api-client';
 import { ArrowLeft, UserPlus } from 'lucide-react';
 import Link from 'next/link';
-import { useAuth } from '@clerk/nextjs';
 
 interface PatientFormData {
   firstName: string;
@@ -28,7 +27,6 @@ interface PatientFormData {
 
 export default function PatientRegistrationPage() {
   const router = useRouter();
-  const { getToken } = useAuth();
   const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState<PatientFormData>({
     firstName: '',
@@ -51,11 +49,14 @@ export default function PatientRegistrationPage() {
     setLoading(true);
 
     try {
-      const token = await getToken();
+      const token = localStorage.getItem('authToken');
       if (!token) {
-        throw new Error("Authentication token not found.");
+        toast.error("Please log in to register patients");
+        router.push('/auth/login');
+        return;
       }
-      const response = await apiClient.createPatient(formData, token);
+      
+      const response = await apiClient.createPatient(formData);
       
       toast.success(response.message || "Patient registered successfully");
 

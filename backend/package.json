@@ -2,20 +2,20 @@
   "name": "hms-backend",
   "version": "1.0.0",
   "description": "Hospital Management System Backend API",
-  "main": "dist/server.js",
+  "main": "src/server.js",
   "scripts": {
-    "dev": "nodemon src/server.ts",
-    "build": "tsc",
-    "start": "node dist/server.js",
-    "lint": "eslint src --ext .ts,.js --quiet --fix",
+    "dev": "nodemon src/server.js",
+    "build": "echo \"No build required for JavaScript\"",
+    "start": "node src/server.js",
+    "lint": "eslint src --ext .js --quiet --fix",
     "test": "echo \"Error: no test specified\" && exit 1",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
-    "db:seed": "ts-node prisma/seed.ts",
+    "db:seed": "node seed.js",
     "db:reset": "prisma migrate reset"
   },
   "prisma": {
-    "seed": "ts-node prisma/seed.ts"
+    "seed": "node seed.js"
   },
   "keywords": [
     "hospital",
@@ -29,37 +29,21 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.3.1",
     "@eslint/js": "^9.36.0",
-    "@types/bcryptjs": "^2.4.6",
-    "@types/cors": "^2.8.19",
-    "@types/express": "^5.0.3",
-    "@types/jsonwebtoken": "^9.0.10",
-    "@types/node": "^20.19.17",
-    "@typescript-eslint/eslint-plugin": "^8.44.1",
-    "@typescript-eslint/parser": "^8.44.1",
     "eslint": "^9.36.0",
     "nodemon": "^3.1.10",
-    "prisma": "^6.16.2",
-    "ts-node": "^10.9.2",
-    "typescript": "^5.9.2"
+    "prisma": "^6.16.2"
   },
   "dependencies": {
     "@clerk/backend": "^2.15.0",
     "@prisma/client": "^6.16.2",
-    "@types/bcrypt": "^6.0.0",
-    "@types/helmet": "^0.0.48",
-    "@types/morgan": "^1.9.10",
-    "@types/node-cron": "^3.0.11",
-    "bcrypt": "^6.0.0",
     "bcryptjs": "^3.0.2",
     "cors": "^2.8.5",
     "dotenv": "^16.6.1",
     "express": "^5.1.0",
     "express-rate-limit": "^8.1.0",
     "helmet": "^8.1.0",
-    "joi": "^18.0.1",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.1",
-    "node-cron": "^4.2.1",
-    "winston": "^3.17.0"
+    "zod": "^3.22.4"
   }
 }

@@ -1,121 +1,136 @@
-'use client'
+'use client';
 
-import {
-  SignInButton,
-  SignUpButton,
-  SignedIn,
-  SignedOut,
-  UserButton,
-  useUser
-} from '@clerk/nextjs'
-import { useState, useEffect } from 'react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { UserRole } from '@/lib/constants';
+import { getUserFromToken } from '@/lib/auth';
 
-export function AuthButtons() {
-  const [isMounted, setIsMounted] = useState(false)
-
-  useEffect(() => {
-    setIsMounted(true)
-  }, [])
-
-  // Prevent hydration mismatch by not rendering until client-side mount
-  if (!isMounted) {
-    return (
-      <div className="flex items-center gap-4">
-        <Button variant="outline" disabled>
-          Loading...
-        </Button>
-      </div>
-    )
-  }
-
-  return (
-    <div className="flex items-center gap-4">
-      <SignedOut>
-        <SignInButton mode="modal">
-          <Button variant="outline">Sign In</Button>
-        </SignInButton>
-        <SignUpButton mode="modal">
-          <Button>Sign Up</Button>
-        </SignUpButton>
-      </SignedOut>
-      <SignedIn>
-        <UserButton 
-          appearance={{
-            elements: {
-              avatarBox: "h-8 w-8"
-            }
-          }}
-        />
-      </SignedIn>
-    </div>
-  )
-}
-
-export function WelcomeCard() {
-  const { user, isLoaded } = useUser()
-  const [isMounted, setIsMounted] = useState(false)
-
-  useEffect(() => {
-    setIsMounted(true)
-  }, [])
-
-  // Prevent hydration mismatch and ensure user data is loaded
-  if (!isMounted || !isLoaded) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Loading...</CardTitle>
-          <CardDescription>
-            Please wait while we load your information
-          </CardDescription>
-        </CardHeader>
-      </Card>
-    )
-  }
-
-  return (
-    <SignedIn>
-      <Card>
-        <CardHeader>
-          <CardTitle>Welcome back, {user?.firstName}!</CardTitle>
-          <CardDescription>
-            Role: {(user?.publicMetadata?.role as string) || 'Not assigned'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <p className="text-sm text-muted-foreground">
-            Hospital ID: {(user?.publicMetadata?.hospitalId as string) || 'Not assigned'}
-          </p>
-        </CardContent>
-      </Card>
-    </SignedIn>
-  )
+interface RoleGuardProps {
+  children: React.ReactNode;
+  allowedRoles: UserRole[];
+  fallbackComponent?: React.ReactNode;
 }
 
 export function RoleGuard({ 
+  children, 
   allowedRoles, 
-  children 
-}: { 
-  allowedRoles: string[], 
-  children: React.ReactNode 
-}) {
-  const { user } = useUser()
-  const userRole = user?.publicMetadata?.role as string
+  fallbackComponent = null 
+}: RoleGuardProps) {
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
 
-  if (!userRole || !allowedRoles.includes(userRole)) {
+  useEffect(() => {
+    const checkAuthorization = () => {
+      try {
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+          router.push('/auth/login');
+          return;
+        }
+
+        const user = getUserFromToken(token);
+        if (!user || !user.role) {
+          router.push('/auth/login');
+          return;
+        }
+
+        if (allowedRoles.includes(user.role)) {
+          setIsAuthorized(true);
+        } else {
+          // Redirect to dashboard if not authorized
+          router.push('/dashboard');
+        }
+      } catch (error) {
+        console.error('Authorization error:', error);
+        router.push('/auth/login');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAuthorization();
+  }, [allowedRoles, router]);
+
+  if (isLoading) {
     return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Access Denied</CardTitle>
-          <CardDescription>
-            You don&apos;t have permission to access this resource.
-          </CardDescription>
-        </CardHeader>
-      </Card>
-    )
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
   }
 
-  return <>{children}</>
+  if (!isAuthorized) {
+    if (fallbackComponent) {
+      return <>{fallbackComponent}</>;
+    }
+    
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-800 mb-4">Access Denied</h1>
+          <p className="text-gray-600">You don't have permission to access this page.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return <>{children}</>;
+}
+
+interface AuthLayoutProps {
+  children: React.ReactNode;
+  requireAuth?: boolean;
+}
+
+export function AuthLayout({ children, requireAuth = true }: AuthLayoutProps) {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const router = useRouter();
+
+  useEffect(() => {
+    const checkAuth = () => {
+      try {
+        const token = localStorage.getItem('authToken');
+        if (requireAuth && !token) {
+          router.push('/auth/login');
+          return;
+        }
+
+        if (token) {
+          const user = getUserFromToken(token);
+          if (user) {
+            setIsAuthenticated(true);
+          } else if (requireAuth) {
+            router.push('/auth/login');
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('Auth check error:', error);
+        if (requireAuth) {
+          router.push('/auth/login');
+          return;
+        }
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, [requireAuth, router]);
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  if (requireAuth && !isAuthenticated) {
+    return null; // Will redirect to login
+  }
+
+  return <>{children}</>;
 }

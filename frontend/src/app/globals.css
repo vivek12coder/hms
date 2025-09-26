@@ -1,47 +1,10 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
-@custom-variant dark (&:is(.dark *));
+/* Tailwind v4 @custom-variant is not recognized by some linters.
+  Use explicit .dark selector below instead. */
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
-}
+/* Replace Tailwind @theme tokens with vanilla CSS variables on :root below. */
 
 :root {
   --radius: 0.625rem;
@@ -76,6 +39,26 @@
   --sidebar-accent-foreground: oklch(0.216 0.006 56.043);
   --sidebar-border: oklch(0.923 0.003 48.717);
   --sidebar-ring: oklch(0.709 0.01 56.259);
+
+  /* Pastel Theme Additions */
+  --pink-50: #fff5f8;
+  --pink-100: #ffe3ec;
+  --pink-200: #ffcadb;
+  --pink-300: #fda4bf;
+  --pink-400: #fb719c;
+  --pink-500: #f43f74;
+  --blue-50: #f3f8ff;
+  --blue-100: #e0f0ff;
+  --blue-200: #b9ddff;
+  --blue-300: #8ac4ff;
+  --blue-400: #56a6ff;
+  --blue-500: #2d84f7;
+  --off-white: #f9fafb;
+  --off-white-alt: #f5f7fa;
+  --gradient-soft: linear-gradient(135deg,var(--pink-50),var(--blue-50));
+  --gradient-accent: linear-gradient(135deg,var(--pink-300),var(--blue-300));
+  --shadow-soft: 0 2px 4px -2px rgba(0,0,0,.05),0 4px 12px -2px rgba(0,0,0,.06);
+  --shadow-hover: 0 4px 6px -1px rgba(0,0,0,.07),0 8px 24px -2px rgba(0,0,0,.08);
 }
 
 .dark {
@@ -114,9 +97,37 @@
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    /* Replace Tailwind @apply with equivalent properties for lint compatibility */
+    border-color: var(--border);
+    outline-color: color-mix(in oklab, var(--ring) 50%, transparent);
   }
   body {
-    @apply bg-background text-foreground;
+    color: var(--foreground);
+    background: var(--gradient-soft);
+    background-attachment: fixed;
   }
+}
+
+/* Pastel utility classes */
+.bg-off-white { background-color: var(--off-white); }
+.bg-off-white-alt { background-color: var(--off-white-alt); }
+.bg-pink-soft { background: linear-gradient(145deg,var(--pink-50),var(--pink-100)); }
+.bg-blue-soft { background: linear-gradient(145deg,var(--blue-50),var(--blue-100)); }
+.bg-card-glass { background: rgba(255,255,255,0.72); backdrop-filter: blur(12px); }
+.border-subtle { border: 1px solid rgba(0,0,0,0.05); }
+.text-gradient-accent { background: var(--gradient-accent); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.shadow-soft { box-shadow: var(--shadow-soft); }
+.shadow-hover { box-shadow: var(--shadow-hover); }
+
+/* Card hover enhancement */
+.elevate-card { transition: transform .25s ease, box-shadow .25s ease; }
+.elevate-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); }
+
+/* Responsive helpers */
+@media (max-width: 640px) {
+  .hide-mobile { display: none !important; }
+  .card-grid-responsive { grid-template-columns: repeat(auto-fill,minmax(160px,1fr)); }
+}
+@media (min-width: 641px) and (max-width: 1024px) {
+  .card-grid-responsive { grid-template-columns: repeat(auto-fill,minmax(220px,1fr)); }
 }
