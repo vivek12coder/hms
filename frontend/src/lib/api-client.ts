@@ -58,6 +58,7 @@ export const endpoints = {
     create: '/billing',
     getById: (id: string) => `/billing/${id}`,
     update: (id: string) => `/billing/${id}`,
+    delete: (id: string) => `/billing/${id}`,
     byPatient: (patientId: string) => `/billing/patient/${patientId}`,
   },
   dashboard: {
@@ -98,7 +99,7 @@ class ApiClient {
       headers.Authorization = `Bearer ${options.token}`;
     } else if (typeof window !== 'undefined') {
       // Try to get token from localStorage in browser environment
-      const token = localStorage.getItem('auth_token');
+      const token = localStorage.getItem('authToken');
       if (token) {
         headers.Authorization = `Bearer ${token}`;
       }
@@ -205,6 +206,233 @@ class ApiClient {
   // Authentication methods
   async login(email: string, password: string): Promise<ApiResponse<{ token: string; user: any }>> {
     return this.post<ApiResponse<{ token: string; user: any }>>(endpoints.auth.login, { email, password });
+  }
+
+  async register(userData: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    password: string;
+    role?: string;
+  }): Promise<ApiResponse<{ token: string; user: any }>> {
+    return this.post<ApiResponse<{ token: string; user: any }>>(endpoints.auth.register, userData);
+  }
+
+  async getCurrentUser(): Promise<ApiResponse<any>> {
+    return this.get<ApiResponse<any>>(endpoints.auth.me);
+  }
+
+  // Patient methods
+  async getPatients(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    gender?: string;
+  }): Promise<ApiResponse<{
+    patients: any[];
+    pagination?: {
+      current: number;
+      total: number;
+      count: number;
+    };
+  }>> {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.search) queryParams.append('search', params.search);
+    if (params?.gender) queryParams.append('gender', params.gender);
+
+    const url = `${endpoints.patients.list}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    
+    return this.get<ApiResponse<{
+      patients: any[];
+      pagination?: {
+        current: number;
+        total: number;
+        count: number;
+      };
+    }>>(url);
+  }
+
+  async getPatient(id: string): Promise<ApiResponse<any>> {
+    return this.get<ApiResponse<any>>(endpoints.patients.getById(id));
+  }
+
+  async createPatient(patientData: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    dateOfBirth?: string;
+    gender?: string;
+    phone?: string;
+    address?: string;
+    emergencyContact?: any;
+    medicalHistory?: any;
+  }): Promise<ApiResponse<any>> {
+    return this.post<ApiResponse<any>>(endpoints.patients.create, patientData);
+  }
+
+  async updatePatient(id: string, patientData: any): Promise<ApiResponse<any>> {
+    return this.put<ApiResponse<any>>(endpoints.patients.update(id), patientData);
+  }
+
+  async deletePatient(id: string): Promise<ApiResponse<any>> {
+    return this.delete<ApiResponse<any>>(endpoints.patients.delete(id));
+  }
+
+  // Doctor methods
+  async getDoctors(params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    specialization?: string;
+  }): Promise<ApiResponse<{
+    doctors: any[];
+    pagination?: {
+      total: number;
+      page: number;
+      limit: number;
+      totalPages: number;
+    };
+  }>> {
+    const queryParams = new URLSearchParams();
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+    if (params?.search) queryParams.append('search', params.search);
+    if (params?.specialization) queryParams.append('specialization', params.specialization);
+
+    const url = `${endpoints.doctors.list}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    return this.get<ApiResponse<any>>(url);
+  }
+
+  async getDoctor(id: string): Promise<ApiResponse<any>> {
+    return this.get<ApiResponse<any>>(endpoints.doctors.getById(id));
+  }
+
+  async createDoctor(doctorData: any): Promise<ApiResponse<any>> {
+    return this.post<ApiResponse<any>>(endpoints.doctors.create, doctorData);
+  }
+
+  async updateDoctor(id: string, doctorData: any): Promise<ApiResponse<any>> {
+    return this.put<ApiResponse<any>>(endpoints.doctors.update(id), doctorData);
+  }
+
+  // Appointment methods
+  async getAppointments(params?: {
+    date?: string;
+    doctorId?: string;
+    patientId?: string;
+    status?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<{
+    appointments: any[];
+    pagination?: {
+      total: number;
+      page: number;
+      limit: number;
+    };
+  }>> {
+    const queryParams = new URLSearchParams();
+    if (params?.date) queryParams.append('date', params.date);
+    if (params?.doctorId) queryParams.append('doctorId', params.doctorId);
+    if (params?.patientId) queryParams.append('patientId', params.patientId);
+    if (params?.status) queryParams.append('status', params.status);
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+
+    const url = `${endpoints.appointments.list}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    return this.get<ApiResponse<any>>(url);
+  }
+
+  async getAppointment(id: string): Promise<ApiResponse<any>> {
+    return this.get<ApiResponse<any>>(endpoints.appointments.getById(id));
+  }
+
+  async createAppointment(appointmentData: {
+    patientId: string;
+    doctorId: string;
+    date: string;
+    time: string;
+    notes?: string;
+    duration?: number;
+  }): Promise<ApiResponse<any>> {
+    return this.post<ApiResponse<any>>(endpoints.appointments.create, appointmentData);
+  }
+
+  async updateAppointment(id: string, appointmentData: any): Promise<ApiResponse<any>> {
+    return this.put<ApiResponse<any>>(endpoints.appointments.update(id), appointmentData);
+  }
+
+  async deleteAppointment(id: string): Promise<ApiResponse<any>> {
+    return this.delete<ApiResponse<any>>(endpoints.appointments.delete(id));
+  }
+
+  // Billing methods
+  async getBillingRecords(params?: {
+    status?: string;
+    patientId?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<{
+    bills: any[];
+    pagination?: {
+      total: number;
+      page: number;
+      limit: number;
+    };
+  }>> {
+    const queryParams = new URLSearchParams();
+    if (params?.status) queryParams.append('status', params.status);
+    if (params?.patientId) queryParams.append('patientId', params.patientId);
+    if (params?.page) queryParams.append('page', params.page.toString());
+    if (params?.limit) queryParams.append('limit', params.limit.toString());
+
+    const url = `${endpoints.billing.list}${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    return this.get<ApiResponse<any>>(url);
+  }
+
+  async getBillingRecord(id: string): Promise<ApiResponse<any>> {
+    return this.get<ApiResponse<any>>(endpoints.billing.getById(id));
+  }
+
+  async createBillingRecord(billingData: {
+    patientId: string;
+    amount: number;
+    description: string;
+    dueDate?: string;
+    items?: any[];
+  }): Promise<ApiResponse<any>> {
+    return this.post<ApiResponse<any>>(endpoints.billing.create, billingData);
+  }
+
+  async updateBillingRecord(id: string, billingData: any): Promise<ApiResponse<any>> {
+    return this.put<ApiResponse<any>>(endpoints.billing.update(id), billingData);
+  }
+
+  async deleteBillingRecord(id: string): Promise<ApiResponse<any>> {
+    return this.delete<ApiResponse<any>>(endpoints.billing.delete(id));
+  }
+
+  // Alias methods for backward compatibility
+  async getBillings(params?: {
+    status?: string;
+    patientId?: string;
+    page?: number;
+    limit?: number;
+  }): Promise<ApiResponse<{
+    bills: any[];
+    pagination?: {
+      total: number;
+      page: number;
+      limit: number;
+    };
+  }>> {
+    return this.getBillingRecords(params);
+  }
+
+  async deleteBilling(id: string): Promise<ApiResponse<any>> {
+    return this.deleteBillingRecord(id);
   }
 
   // Dashboard methods

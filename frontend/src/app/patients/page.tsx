@@ -44,22 +44,21 @@ import Link from 'next/link';
 
 interface Patient {
   id: string;
+  userId: string;
+  dateOfBirth: string | null;
+  gender: string | null;
+  phone: string | null;
+  address: string | null;
+  emergencyContact: any | null;
+  medicalHistory: any | null;
+  createdAt: string;
+  updatedAt: string;
   user: {
     firstName: string;
     lastName: string;
     email: string;
   };
-  phone: string;
-  gender: string;
-  dateOfBirth: string;
-  address: string;
-  emergencyContact: {
-    name: string;
-    phone: string;
-  };
-  appointments: any[];
   billings: any[];
-  createdAt: string;
 }
 
 export default function PatientsPage() {
@@ -107,8 +106,21 @@ export default function PatientsPage() {
   }, [patients, searchTerm]);
 
   const fetchPatients = async () => {
+    const currentToken = localStorage.getItem('authToken');
+    console.log('=== Debug fetchPatients ===');
+    console.log('authToken state:', authToken ? 'EXISTS' : 'MISSING');
+    console.log('localStorage token:', currentToken ? 'EXISTS' : 'MISSING');
+    
+    if (!currentToken) {
+      setError('Authentication token not found in storage');
+      console.error('No token found in localStorage');
+      router.push('/auth/login');
+      return;
+    }
+
     if (!authToken) {
-      setError('Authentication token not found');
+      setError('Authentication token not loaded in state');
+      console.error('No token in component state');
       return;
     }
 
@@ -116,6 +128,7 @@ export default function PatientsPage() {
       setLoading(true);
       setError(null);
       
+      console.log('Making API call to getPatients...');
       const response = await apiClient.getPatients({
         page: 1,
         limit: 50, // Get more patients for now
@@ -131,9 +144,9 @@ export default function PatientsPage() {
           patientsData = response.data.patients;
         } else if (Array.isArray(response.data)) {
           patientsData = response.data;
-        } else if (typeof response.data === 'object' && response.data !== null) {
-          // Single object response, wrap in array
-          patientsData = [response.data];
+        } else {
+          // No valid patient data found
+          patientsData = [];
         }
       }
       
@@ -169,7 +182,7 @@ export default function PatientsPage() {
     return new Date(dateString).toLocaleDateString();
   };
 
-  const getGenderBadgeColor = (gender: string) => {
+  const getGenderBadgeColor = (gender: string | null) => {
     switch (gender) {
       case 'MALE': return 'bg-blue-100 text-blue-800';
       case 'FEMALE': return 'bg-pink-100 text-pink-800';
@@ -262,7 +275,7 @@ export default function PatientsPage() {
           </CardHeader>
           <CardContent>
             <div className="text-xl sm:text-2xl font-bold">
-              {Array.isArray(patients) ? patients.reduce((sum, p) => sum + (p?.appointments?.length || 0), 0) : 0}
+              0
             </div>
           </CardContent>
         </Card>
@@ -370,7 +383,7 @@ export default function PatientsPage() {
                         </TableCell>
                         <TableCell>
                           <Badge className={`${getGenderBadgeColor(patient.gender)} text-xs`}>
-                            {patient.gender}
+                            {patient.gender || 'N/A'}
                           </Badge>
                         </TableCell>
                         <TableCell className="hidden md:table-cell">
@@ -380,15 +393,17 @@ export default function PatientsPage() {
                         </TableCell>
                         <TableCell className="hidden lg:table-cell">
                           <div className="text-xs sm:text-sm">
-                            <div className="font-medium">{patient.emergencyContact?.name || 'N/A'}</div>
+                            <div className="font-medium">
+                              {(typeof patient.emergencyContact === 'object' && patient.emergencyContact?.name) || 'N/A'}
+                            </div>
                             <div className="text-muted-foreground">
-                              {patient.emergencyContact?.phone || 'N/A'}
+                              {(typeof patient.emergencyContact === 'object' && patient.emergencyContact?.phone) || 'N/A'}
                             </div>
                           </div>
                         </TableCell>
                         <TableCell className="hidden md:table-cell">
                           <Badge variant="secondary" className="text-xs">
-                            {patient.appointments?.length || 0} appointments
+                            {patient.billings?.length || 0} bills
                           </Badge>
                         </TableCell>
                         <TableCell>

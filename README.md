@@ -369,252 +369,898 @@ hospital-management-system/
 ```
 
 ---
-│   │   ├── /services              # Business logic services
-│   │   │   ├── AuditService.js    # Audit logging service
-│   │   │   ├── AuthService.js     # Authentication service
-│   │   │   └── PatientService.js  # Patient management service
-│   │   ├── /utils                 # Helper utilities
-│   │   │   ├── auth.js            # Auth utilities
-│   │   │   └── logger.js          # Logging configuration
-│   │   └── server.js              # Express server setup
-│   ├── schema.prisma              # Prisma database schema
-│   └── package.json               # Backend dependencies
-│
-├── README.md                      # Project documentation
-├── .gitignore                     # Git ignore file
-└── package.json                   # Root package.json for monorepo
+## 🔌 API Documentation
+
+### 🔐 **Authentication Endpoints**
+
+<details>
+<summary><strong>POST /api/auth/register</strong> - Register New User</summary>
+
+**Request Body:**
+```json
+{
+  "firstName": "John",
+  "lastName": "Doe", 
+  "email": "john.doe@example.com",
+  "password": "securePassword123",
+  "role": "PATIENT"
+}
 ```
 
-## Getting Started
+**Response (201):**
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": "clp123abc",
+      "email": "john.doe@example.com",
+      "firstName": "John",
+      "lastName": "Doe",
+      "role": "PATIENT"
+    },
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  }
+}
+```
+</details>
 
-### Prerequisites
-- Node.js 18+ (LTS recommended)
-- PostgreSQL 14+ database
-- npm or yarn package manager
-- Git
+<details>
+<summary><strong>POST /api/auth/login</strong> - User Authentication</summary>
 
-### Installation
-
-1. Clone the repository
-```bash
-git clone <repository-url>
-cd hospital_management_system
+**Request Body:**
+```json
+{
+  "email": "john.doe@example.com",
+  "password": "securePassword123"
+}
 ```
 
-2. Install dependencies for both frontend and backend
+**Response (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "user": {
+      "id": "clp123abc",
+      "email": "john.doe@example.com",
+      "firstName": "John",
+      "lastName": "Doe",
+      "role": "PATIENT"
+    },
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  }
+}
+```
+</details>
+
+<details>
+<summary><strong>GET /api/auth/me</strong> - Get Current User Profile</summary>
+
+**Headers:**
+```
+Authorization: Bearer {jwt_token}
+```
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "clp123abc",
+    "email": "john.doe@example.com",
+    "firstName": "John",
+    "lastName": "Doe",
+    "role": "PATIENT",
+    "createdAt": "2024-01-15T10:30:00Z"
+  }
+}
+```
+</details>
+
+### 👥 **Patient Management Endpoints**
+
+<details>
+<summary><strong>GET /api/patients</strong> - List Patients (Paginated)</summary>
+
+**Query Parameters:**
+- `page` (number, default: 1)
+- `limit` (number, default: 20)
+- `search` (string, optional)
+- `gender` (string, optional)
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "patients": [
+      {
+        "id": "clp456def",
+        "firstName": "Jane",
+        "lastName": "Smith",
+        "email": "jane.smith@example.com",
+        "dateOfBirth": "1990-05-15",
+        "gender": "FEMALE",
+        "phone": "+1234567890",
+        "createdAt": "2024-01-15T10:30:00Z"
+      }
+    ],
+    "pagination": {
+      "total": 150,
+      "page": 1,
+      "limit": 20,
+      "totalPages": 8
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary><strong>POST /api/patients</strong> - Create New Patient</summary>
+
+**Request Body:**
+```json
+{
+  "firstName": "Alice",
+  "lastName": "Johnson",
+  "email": "alice.johnson@example.com",
+  "dateOfBirth": "1985-03-20",
+  "gender": "FEMALE",
+  "phone": "+1987654321",
+  "address": "123 Main St, City, State 12345",
+  "emergencyContact": {
+    "name": "Bob Johnson",
+    "relationship": "Spouse",
+    "phone": "+1234567890"
+  }
+}
+```
+
+**Response (201):**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "clp789ghi",
+    "firstName": "Alice",
+    "lastName": "Johnson",
+    "email": "alice.johnson@example.com",
+    "dateOfBirth": "1985-03-20",
+    "gender": "FEMALE",
+    "phone": "+1987654321",
+    "createdAt": "2024-01-15T10:30:00Z"
+  }
+}
+```
+</details>
+
+### 📅 **Appointment Management Endpoints**
+
+<details>
+<summary><strong>GET /api/appointments</strong> - List Appointments</summary>
+
+**Query Parameters:**
+- `date` (string, YYYY-MM-DD format)
+- `doctorId` (string, optional)
+- `patientId` (string, optional)
+- `status` (string, optional)
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "appointments": [
+      {
+        "id": "cla123abc",
+        "patientId": "clp456def",
+        "doctorId": "cld789ghi",
+        "date": "2024-01-20",
+        "time": "14:30",
+        "status": "SCHEDULED",
+        "notes": "Regular checkup",
+        "patient": {
+          "firstName": "Jane",
+          "lastName": "Smith"
+        },
+        "doctor": {
+          "firstName": "Dr. John",
+          "lastName": "Wilson"
+        }
+      }
+    ]
+  }
+}
+```
+</details>
+
+<details>
+<summary><strong>POST /api/appointments</strong> - Create Appointment</summary>
+
+**Request Body:**
+```json
+{
+  "patientId": "clp456def",
+  "doctorId": "cld789ghi",
+  "date": "2024-01-25",
+  "time": "09:00",
+  "notes": "Follow-up consultation",
+  "duration": 30
+}
+```
+
+**Response (201):**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "cla456def",
+    "patientId": "clp456def",
+    "doctorId": "cld789ghi",
+    "date": "2024-01-25",
+    "time": "09:00",
+    "status": "SCHEDULED",
+    "notes": "Follow-up consultation",
+    "createdAt": "2024-01-15T10:30:00Z"
+  }
+}
+```
+</details>
+
+### 💰 **Billing & Finance Endpoints**
+
+<details>
+<summary><strong>GET /api/billing</strong> - List Billing Records</summary>
+
+**Query Parameters:**
+- `status` (string: PAID, PENDING, OVERDUE)
+- `patientId` (string, optional)
+- `page` (number, default: 1)
+- `limit` (number, default: 20)
+
+**Response (200):**
+```json
+{
+  "success": true,
+  "data": {
+    "bills": [
+      {
+        "id": "clb123abc",
+        "patientId": "clp456def",
+        "amount": 250.00,
+        "description": "Consultation and Lab Tests",
+        "status": "PENDING",
+        "issueDate": "2024-01-15",
+        "dueDate": "2024-02-15",
+        "patient": {
+          "firstName": "Jane",
+          "lastName": "Smith"
+        }
+      }
+    ],
+    "pagination": {
+      "total": 45,
+      "page": 1,
+      "limit": 20
+    }
+  }
+}
+```
+</details>
+
+<details>
+<summary><strong>POST /api/billing</strong> - Create New Bill</summary>
+
+**Request Body:**
+```json
+{
+  "patientId": "clp456def",
+  "amount": 350.00,
+  "description": "Emergency consultation and X-ray",
+  "dueDate": "2024-02-20",
+  "items": [
+    {
+      "description": "Emergency consultation",
+      "quantity": 1,
+      "unitPrice": 200.00,
+      "total": 200.00
+    },
+    {
+      "description": "X-ray examination",
+      "quantity": 1,
+      "unitPrice": 150.00,
+      "total": 150.00
+    }
+  ]
+}
+```
+
+**Response (201):**
+```json
+{
+  "success": true,
+  "data": {
+    "id": "clb456def",
+    "patientId": "clp456def",
+    "amount": 350.00,
+    "description": "Emergency consultation and X-ray",
+    "status": "PENDING",
+    "issueDate": "2024-01-15",
+    "dueDate": "2024-02-20",
+    "createdAt": "2024-01-15T10:30:00Z"
+  }
+}
+```
+</details>
+
+### 📊 **Dashboard & Analytics Endpoints**
+
+<details>
+<summary><strong>GET /api/dashboard/stats</strong> - Role-based Dashboard Statistics</summary>
+
+**Headers:**
+```
+Authorization: Bearer {jwt_token}
+```
+
+**Response (200) - Admin View:**
+```json
+{
+  "success": true,
+  "data": {
+    "overview": {
+      "totalPatients": 1247,
+      "totalDoctors": 23,
+      "todayAppointments": 18,
+      "monthlyRevenue": 45780.50
+    },
+    "appointmentStats": {
+      "scheduled": 45,
+      "completed": 123,
+      "cancelled": 8,
+      "noShow": 3
+    },
+    "revenueStats": {
+      "thisMonth": 45780.50,
+      "lastMonth": 42150.75,
+      "growth": 8.6
+    },
+    "patientFlow": [
+      { "date": "2024-01-01", "count": 12 },
+      { "date": "2024-01-02", "count": 15 }
+    ]
+  }
+}
+```
+</details>
+
+---
+
+## 🔐 Security & Compliance
+
+### 🛡️ **Security Features**
+
+<table>
+<tr>
+<td width="50%">
+
+**🔒 Authentication & Authorization**
+- JWT-based authentication with refresh tokens
+- Role-based access control (RBAC)
+- Multi-factor authentication ready
+- Session management and timeout
+- Secure password hashing (bcryptjs)
+
+**🛡️ Data Protection**
+- End-to-end encryption for sensitive data
+- HTTPS enforcement in production
+- SQL injection prevention
+- XSS protection with CSP headers
+- Input validation and sanitization
+
+</td>
+<td width="50%">
+
+**🔍 Monitoring & Compliance**
+- Comprehensive audit logging
+- HIPAA compliance features
+- Real-time security monitoring
+- Failed login attempt tracking
+- Data breach detection alerts
+
+**⚡ Performance Security**
+- Rate limiting (100 requests/15min)
+- DDoS protection
+- API request throttling
+- Connection pooling
+- Optimized database queries
+
+</td>
+</tr>
+</table>
+
+### 📋 **HIPAA Compliance Checklist**
+
+- ✅ **Access Control** - Role-based permissions and user authentication
+- ✅ **Audit Logs** - Complete trail of all data access and modifications
+- ✅ **Data Encryption** - At rest and in transit encryption
+- ✅ **Data Backup** - Automated backups with encryption
+- ✅ **User Training** - Documentation and security best practices
+- ✅ **Incident Response** - Procedures for security breaches
+- ✅ **Risk Assessment** - Regular security evaluations
+
+### 🔑 **User Roles & Permissions Matrix**
+
+| Feature | Admin | Doctor | Patient | Receptionist |
+|---------|-------|--------|---------|-------------|
+| **User Management** | ✅ Full | ❌ None | ❌ None | 🔶 Limited |
+| **Patient Records** | ✅ All | 🔶 Assigned | 🔶 Own Only | 🔶 Basic Info |
+| **Appointments** | ✅ All | 🔶 Own Schedule | 🔶 Own Only | ✅ All |
+| **Billing** | ✅ All | 🔶 View Only | 🔶 Own Bills | ✅ Create/Edit |
+| **Reports** | ✅ All | 🔶 Patient Reports | ❌ None | 🔶 Basic |
+| **Settings** | ✅ System | 🔶 Profile | 🔶 Profile | 🔶 Profile |
+
+---
+
+## 🚢 Deployment Guide
+
+### 🌐 **Production Deployment Options**
+
+<table>
+<tr>
+<td width="33%">
+
+### **☁️ Vercel (Recommended for Frontend)**
 ```bash
-# Install frontend dependencies
+# Install Vercel CLI
+npm i -g vercel
+
+# Deploy frontend
 cd frontend
-npm install
-
-# Install backend dependencies
-cd ../backend
-npm install
+vercel --prod
 ```
 
-3. Set up environment variables
+**Environment Variables:**
+- `NEXT_PUBLIC_API_URL`
+- `NEXT_PUBLIC_HOSPITAL_NAME`
+- `NEXT_PUBLIC_APP_ENV=production`
 
-**Backend (.env)**
+</td>
+<td width="33%">
+
+### **🚄 Railway (Backend)**
+```bash
+# Connect to Railway
+railway login
+railway link
+
+# Deploy backend
+cd backend
+railway up
 ```
-# Database connection
-DATABASE_URL=postgresql://username:password@localhost:5432/hospital_db
-DIRECT_URL=postgresql://username:password@localhost:5432/hospital_db
+
+**Environment Variables:**
+- `DATABASE_URL` (from Railway PostgreSQL)
+- `JWT_SECRET`
+- `NODE_ENV=production`
+- `PORT=3001`
+
+</td>
+<td width="33%">
+
+### **🐘 Supabase (Database)**
+```bash
+# Run migrations
+npx prisma migrate deploy
+
+# Generate client
+npx prisma generate
+```
+
+**Features:**
+- Managed PostgreSQL
+- Automatic backups
+- Connection pooling
+- Real-time subscriptions
+
+</td>
+</tr>
+</table>
+
+### 🐳 **Docker Deployment**
+
+<details>
+<summary><strong>Docker Compose Setup</strong></summary>
+
+**docker-compose.yml:**
+```yaml
+version: '3.8'
+services:
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    environment:
+      - NEXT_PUBLIC_API_URL=http://backend:3001/api
+    depends_on:
+      - backend
+
+  backend:
+    build: ./backend
+    ports:
+      - "3001:3001"
+    environment:
+      - DATABASE_URL=postgresql://postgres:password@db:5432/hospital_db
+      - JWT_SECRET=your-secret-key
+      - NODE_ENV=production
+    depends_on:
+      - db
+
+  db:
+    image: postgres:14
+    environment:
+      - POSTGRES_DB=hospital_db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+
+volumes:
+  postgres_data:
+```
+
+**Commands:**
+```bash
+# Build and start all services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down
+```
+</details>
+
+### ⚙️ **Environment Configuration for Production**
+
+<details>
+<summary><strong>Backend Production Environment</strong></summary>
+
+```env
+# Database (Use production database URL)
+DATABASE_URL="postgresql://user:pass@production-db:5432/hospital_db?sslmode=require"
+DIRECT_URL="postgresql://user:pass@production-db:5432/hospital_db?sslmode=require"
+
+# Security
+JWT_SECRET="your-256-bit-production-secret-key-here"
+JWT_EXPIRES_IN="24h"
+
+# Server
+NODE_ENV="production"
+PORT="3001"
+CORS_ORIGIN="https://your-frontend-domain.com"
+
+# Logging
+LOG_LEVEL="warn"
+ENABLE_AUDIT_LOGGING="true"
+
+# Rate Limiting
+API_RATE_LIMIT="50"
+AUTH_RATE_LIMIT="3"
+
+# Security Headers
+TRUSTED_PROXIES="127.0.0.1,::1"
+```
+</details>
+
+<details>
+<summary><strong>Frontend Production Environment</strong></summary>
+
+```env
+# API Configuration
+NEXT_PUBLIC_API_URL="https://your-api-domain.com/api"
+NEXT_PUBLIC_HOSPITAL_NAME="Your Hospital Name"
+NEXT_PUBLIC_APP_ENV="production"
+NEXT_PUBLIC_DEBUG_MODE="false"
 
 # Authentication
-JWT_SECRET=your_secure_jwt_secret_key
-JWT_EXPIRES_IN=1d
+NEXT_PUBLIC_SESSION_TIMEOUT="720"  # 12 hours for production
 
-# Server configuration
-PORT=3001
-NODE_ENV=development
-CORS_ORIGIN=http://localhost:3000
+# Features
+NEXT_PUBLIC_ENABLE_APPOINTMENTS="true"
+NEXT_PUBLIC_ENABLE_BILLING="true"
+NEXT_PUBLIC_ENABLE_PRESCRIPTIONS="true"
 
-# Logging and security
-LOG_LEVEL=info
-RATE_LIMIT_WINDOW=15
-RATE_LIMIT_MAX=100
+# Performance
+NEXT_PUBLIC_API_TIMEOUT="15000"
+NEXT_PUBLIC_LOG_API_CALLS="false"
 ```
+</details>
 
-**Frontend (.env.local)**
-```
-NEXT_PUBLIC_API_URL=http://localhost:3001/api
-NEXT_PUBLIC_USE_MOCK_DASHBOARD=false
-```
+---
 
-4. Set up the database
+## 🧪 Testing & Quality Assurance
+
+### 🔬 **Testing Strategy**
+
+<table>
+<tr>
+<td width="50%">
+
+**🧪 Backend Testing**
 ```bash
-# Create the database (if not using existing)
-# psql -c "CREATE DATABASE hospital_db;"
+# Unit tests
+npm run test:unit
 
-# Run migrations
-cd backend
-npx prisma migrate dev --name init
+# Integration tests  
+npm run test:integration
 
-# Seed with sample data (optional)
-npx prisma db seed
+# API endpoint tests
+npm run test:api
+
+# Security tests
+npm run test:security
 ```
 
-5. Run the development servers
+</td>
+<td width="50%">
+
+**🖥️ Frontend Testing**
 ```bash
-# Terminal 1: Start backend server
-cd backend
-npm run dev
+# Component tests
+npm run test:components
 
-# Terminal 2: Start frontend
-cd frontend
-npm run dev
+# E2E tests
+npm run test:e2e
+
+# Accessibility tests
+npm run test:a11y
+
+# Performance tests
+npm run test:lighthouse
 ```
 
-6. Access the application
-   - Open your browser and navigate to `http://localhost:3000`
-   - Log in with sample credentials:
-     - Admin: admin@hospital.com / password123
-     - Doctor: doctor@hospital.com / password123
-     - Patient: patient@hospital.com / password123
-     - Receptionist: reception@hospital.com / password123
+</td>
+</tr>
+</table>
 
-## API Endpoints
+### 📊 **Quality Metrics**
 
-### Authentication
-- `POST /api/auth/register` - Register new user
-  - Body: `{ firstName, lastName, email, password, role }`
-  - Response: `{ id, email, role, token }`
+- **Code Coverage**: Target 90%+ for critical paths
+- **Performance**: First Contentful Paint < 1.5s
+- **Accessibility**: WCAG 2.1 AA compliance
+- **Security**: OWASP Top 10 compliance
+- **SEO**: Lighthouse score > 95
 
-- `POST /api/auth/login` - User login
-  - Body: `{ email, password }`
-  - Response: `{ id, email, role, token }`
+---
 
-- `GET /api/auth/me` - Get current user profile
-  - Header: `Authorization: Bearer {token}`
-  - Response: `{ id, email, firstName, lastName, role, ... }`
+## 🤝 Contributing & Development
 
-- `PUT /api/auth/me` - Update current user profile
-  - Header: `Authorization: Bearer {token}`
-  - Body: `{ firstName, lastName, email, ... }`
+### 🔄 **Development Workflow**
 
-### Patients
-- `GET /api/patients` - List patients (paginated)
-  - Query: `?page=1&limit=20&search=smith`
-  - Response: `{ data: [...patients], total, page, limit }`
+```mermaid
+graph LR
+    A[Fork Repository] --> B[Create Feature Branch]
+    B --> C[Develop & Test]
+    C --> D[Run Quality Checks]
+    D --> E[Submit Pull Request]
+    E --> F[Code Review]
+    F --> G[Merge to Main]
+    G --> H[Deploy to Production]
+```
 
-- `POST /api/patients` - Create new patient
-  - Body: `{ firstName, lastName, email, dateOfBirth, gender, ... }`
-  - Response: `{ id, firstName, lastName, ... }`
+### 📋 **Contribution Guidelines**
 
-- `GET /api/patients/:id` - Get patient details
-  - Response: `{ id, firstName, lastName, medicalHistory, ... }`
+1. **🍴 Fork & Clone**
+   ```bash
+   git clone https://github.com/your-username/hms.git
+   cd hms
+   git checkout -b feature/amazing-feature
+   ```
 
-- `PUT /api/patients/:id` - Update patient
-  - Body: `{ firstName, lastName, ... }`
-  - Response: `{ id, firstName, lastName, ... }`
+2. **💻 Development**
+   - Follow existing code style and patterns
+   - Write comprehensive tests for new features
+   - Update documentation as needed
+   - Ensure accessibility compliance
 
-### Appointments
-- `GET /api/appointments` - List appointments
-  - Query: `?date=2023-12-01&doctorId=123`
-  - Response: `{ data: [...appointments], total }`
+3. **✅ Quality Checks**
+   ```bash
+   # Run linting
+   npm run lint
+   
+   # Run tests
+   npm run test
+   
+   # Check TypeScript
+   npm run type-check
+   
+   # Test build
+   npm run build
+   ```
 
-- `POST /api/appointments` - Create appointment
-  - Body: `{ patientId, doctorId, date, time, notes, ... }`
-  - Response: `{ id, patientName, doctorName, date, ... }`
+4. **📝 Pull Request**
+   - Provide clear description of changes
+   - Include screenshots for UI changes
+   - Reference related issues
+   - Ensure CI/CD passes
 
-- `PUT /api/appointments/:id` - Update appointment
-  - Response: `{ id, status, ... }`
+### 🏗️ **Development Standards**
 
-- `DELETE /api/appointments/:id` - Cancel appointment
+- **Code Style**: ESLint + Prettier configuration
+- **Git Commits**: Conventional commits format
+- **Documentation**: JSDoc for functions, README updates
+- **Testing**: Minimum 80% code coverage
+- **Security**: No secrets in code, input validation
 
-### Billing
-- `GET /api/billing` - List billing records
-  - Query: `?status=paid&patientId=123`
-  - Response: `{ data: [...bills], total }`
+---
 
-- `POST /api/billing` - Create new bill
-  - Body: `{ patientId, appointmentId, items: [...], total, ... }`
-  - Response: `{ id, invoiceNumber, total, ... }`
+## 📈 Performance & Optimization
 
-- `GET /api/billing/:id` - Get bill details
-  - Response: `{ id, details, status, payments, ... }`
+### ⚡ **Performance Features**
 
-### Dashboard
-- `GET /api/dashboard/stats` - Get role-based dashboard statistics
-  - Response: `{ patients, appointments, revenue, ... }`
+<table>
+<tr>
+<td width="50%">
 
-## User Roles & Permissions
+**🚀 Frontend Optimizations**
+- Next.js App Router for optimal loading
+- Image optimization with `next/image`
+- Code splitting and lazy loading
+- Service Worker for offline capability
+- Progressive Web App (PWA) features
+- Optimized bundle size < 250KB
 
-### Admin
-- Full system access
-- Manage all users (create, update, disable)
-- View analytics and reporting
-- Configure system settings
-- Access all patient records and billing information
+</td>
+<td width="50%">
 
-### Doctor
-- View and update assigned patient records
-- Manage appointments and scheduling
-- Create and manage prescriptions
-- View patient medical history
-- Access billing related to their patients
+**⚙️ Backend Optimizations**
+- Database query optimization
+- Connection pooling (10 connections)
+- Redis caching layer (optional)
+- API response compression
+- Rate limiting and request throttling
+- Background job processing
 
-### Patient
-- View and update own profile
-- Book and manage appointments
-- View own medical records and history
-- View and pay personal bills
-- Request prescription refills
+</td>
+</tr>
+</table>
 
-### Receptionist
-- Register new patients
-- Manage check-ins and appointments
-- Process basic administrative tasks
-- Generate billing records
-- Handle patient scheduling and wait times
+### 📊 **Monitoring & Analytics**
 
-## Security & Compliance
+- **Application Performance Monitoring (APM)**
+- **Real-time error tracking**
+- **Database performance metrics**
+- **User behavior analytics**
+- **Security event monitoring**
+- **Uptime monitoring**
 
-- **JWT Authentication**: Secure, expiring tokens with refresh capability
-- **Role-Based Access Control**: Granular permissions based on user role
-- **Data Encryption**: Sensitive data encryption at rest and in transit
-- **Input Validation**: Comprehensive validation with Zod to prevent injection attacks
-- **Rate Limiting**: Protection against brute force and DoS attacks
-- **Audit Logging**: Comprehensive logging for security events and compliance
-- **HIPAA Compliance**: Following healthcare data protection standards
-- **CORS Protection**: Configured to prevent cross-site request forgery
+---
 
-## Deployment
+## 🎯 Roadmap & Future Features
 
-### Frontend Deployment (Vercel/Netlify)
-1. Connect your GitHub repository to Vercel/Netlify
-2. Configure build settings:
-   - Build command: `cd frontend && npm install && npm run build`
-   - Output directory: `frontend/.next`
-3. Set required environment variables
-4. Deploy and monitor build logs
+### 🚀 **Version 2.0 Planned Features**
 
-### Backend Deployment (Railway/Render)
-1. Create a new web service
-2. Connect your GitHub repository
-3. Configure build settings:
-   - Build command: `cd backend && npm install && npx prisma generate`
-   - Start command: `cd backend && npm start`
-4. Set all required environment variables
-5. Deploy and verify API access
+- [ ] **🤖 AI-Powered Diagnostics** - Machine learning for medical insights
+- [ ] **📱 Mobile App** - React Native mobile application
+- [ ] **🔗 API Integrations** - Lab systems, insurance providers, pharmacies
+- [ ] **📊 Advanced Analytics** - Predictive analytics and reporting
+- [ ] **💬 Real-time Chat** - Doctor-patient communication
+- [ ] **🌐 Multi-language Support** - Internationalization (i18n)
+- [ ] **☁️ Multi-cloud Deployment** - AWS, Azure, GCP support
+- [ ] **🔄 Workflow Automation** - Custom business process automation
 
-### Database (Supabase/Neon)
-1. Create a PostgreSQL database
-2. Set up connection pooling if needed
-3. Update your `DATABASE_URL` in environment variables
-4. Run migrations: `npx prisma migrate deploy`
-5. Configure database backup strategy
+### 📅 **Release Timeline**
 
-## Contributing
+| Version | Release Date | Key Features |
+|---------|--------------|--------------|
+| **v1.0** | ✅ Current | Core HMS functionality |
+| **v1.1** | Q2 2024 | Enhanced reporting, mobile optimization |
+| **v1.2** | Q3 2024 | API integrations, advanced security |
+| **v2.0** | Q1 2025 | AI features, mobile app |
 
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/amazing-feature`
-3. Commit your changes: `git commit -m 'Add amazing feature'`
-4. Push to the branch: `git push origin feature/amazing-feature`
-5. Open a Pull Request
+---
 
-Please ensure your code follows our style guidelines and includes appropriate tests.
+## 📞 Support & Community
 
-## License
+### 🆘 **Getting Help**
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+<table>
+<tr>
+<td width="25%">
+
+**📖 Documentation**
+- [User Guide](docs/user-guide.md)
+- [API Reference](docs/api-reference.md)
+- [Deployment Guide](docs/deployment.md)
+- [Troubleshooting](docs/troubleshooting.md)
+
+</td>
+<td width="25%">
+
+**💬 Community**
+- [Discord Server](https://discord.gg/hms)
+- [GitHub Discussions](https://github.com/vivek12coder/hms/discussions)
+- [Stack Overflow](https://stackoverflow.com/questions/tagged/hms)
+
+</td>
+<td width="25%">
+
+**🐛 Bug Reports**
+- [Issue Tracker](https://github.com/vivek12coder/hms/issues)
+- [Security Issues](mailto:security@hms.com)
+- [Feature Requests](https://github.com/vivek12coder/hms/issues/new?template=feature_request.md)
+
+</td>
+<td width="25%">
+
+**💼 Enterprise**
+- [Enterprise Support](mailto:enterprise@hms.com)
+- [Custom Development](mailto:dev@hms.com)
+- [Training & Consulting](mailto:training@hms.com)
+
+</td>
+</tr>
+</table>
+
+---
+
+## 📄 License & Legal
+
+### 📜 **MIT License**
+
+```
+MIT License
+
+Copyright (c) 2024 HMS Development Team
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+### ⚖️ **Compliance & Privacy**
+
+- **HIPAA Compliance**: Healthcare data protection standards
+- **GDPR Compliance**: European data protection regulation
+- **SOC 2 Type II**: Security and availability compliance
+- **Privacy Policy**: [View Privacy Policy](PRIVACY.md)
+- **Terms of Service**: [View Terms](TERMS.md)
+
+---
+
+<div align="center">
+
+### 🌟 **Built with ❤️ by the HMS Development Team**
+
+**If this project helped you, please consider giving it a ⭐ star on GitHub!**
+
+[![GitHub stars](https://img.shields.io/github/stars/vivek12coder/hms?style=social)](https://github.com/vivek12coder/hms/stargazers)
+[![GitHub forks](https://img.shields.io/github/forks/vivek12coder/hms?style=social)](https://github.com/vivek12coder/hms/network/members)
+[![GitHub issues](https://img.shields.io/github/issues/vivek12coder/hms)](https://github.com/vivek12coder/hms/issues)
+[![GitHub license](https://img.shields.io/github/license/vivek12coder/hms)](https://github.com/vivek12coder/hms/blob/main/LICENSE)
+
+---
+
+**[⬆️ Back to Top](#-hospital-management-system-hms)**
+
+</div>

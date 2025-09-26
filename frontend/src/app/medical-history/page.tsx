@@ -59,11 +59,14 @@ export default function MedicalHistoryPage() {
       
       // Since we don't have a specific medical history endpoint,
       // we'll fetch billing records as medical history
-      const response = await apiClient.get('/billing')
+      const response = await apiClient.get<{
+        success: boolean;
+        data: any[];
+      }>('/billing')
       
-      if (response.data.success) {
+      if (response.success) {
         // Transform billing data into medical records format
-        const medicalRecords: MedicalRecord[] = response.data.data.map((bill: any, index: number) => ({
+        const medicalRecords: MedicalRecord[] = response.data.map((bill: any, index: number) => ({
           id: bill.id,
           date: bill.createdAt,
           type: 'billing' as const,

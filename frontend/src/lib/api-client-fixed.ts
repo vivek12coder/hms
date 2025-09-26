@@ -98,7 +98,7 @@ class ApiClient {
       headers.Authorization = `Bearer ${options.token}`;
     } else if (typeof window !== 'undefined') {
       // Try to get token from localStorage in browser environment
-      const token = localStorage.getItem('auth_token');
+      const token = localStorage.getItem('authToken');
       if (token) {
         headers.Authorization = `Bearer ${token}`;
       }

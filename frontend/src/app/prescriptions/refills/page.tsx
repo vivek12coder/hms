@@ -57,9 +57,12 @@ export default function PrescriptionRefillsPage() {
 
   const fetchMedications = async () => {
     try {
-      const response = await apiClient.get('/prescriptions')
-      if (response.data.success) {
-        const medicationsData = response.data.data.map((prescription: any) => ({
+      const response = await apiClient.get<{
+        success: boolean;
+        data: any[];
+      }>('/prescriptions')
+      if (response.success) {
+        const medicationsData = response.data.map((prescription: any) => ({
           id: prescription.id,
           name: prescription.medicationName,
           dosage: prescription.dosage,
@@ -147,9 +150,12 @@ export default function PrescriptionRefillsPage() {
         deliveryInfo
       }
 
-      const response = await apiClient.post('/prescriptions/refill', requestData)
+      const response = await apiClient.post<{
+        success: boolean;
+        data?: any;
+      }>('/prescriptions/refill', requestData)
       
-      if (response.data.success) {
+      if (response.success) {
         alert('Prescription refill request submitted successfully! You will receive a confirmation email shortly.')
         
         // Reset form

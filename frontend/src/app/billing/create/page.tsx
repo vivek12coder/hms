@@ -142,7 +142,6 @@ export default function CreateBillingPage() {
       setSubmitting(true);
       await apiClient.createBillingRecord({
         patientId: formData.patientId,
-        appointmentId: formData.appointmentId,
         amount: amount,
         description: formData.description.trim(),
         dueDate: formData.dueDate
