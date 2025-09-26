@@ -50,7 +50,7 @@ export function useFormFeedback() {
       }
 
       // Parse rate limit headers for attempts remaining
-      const rl = apiClient.getRateLimitInfo();
+      const rl = apiClient.getRateLimitInfo ? apiClient.getRateLimitInfo() : null;
       if (rl?.remaining) {
         const remainNum = parseInt(rl.remaining, 10);
         if (!isNaN(remainNum)) attemptsRemaining = remainNum;

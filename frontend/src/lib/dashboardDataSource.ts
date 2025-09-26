@@ -34,7 +34,7 @@ export async function getAdminDashboardData(): Promise<AdminUnifiedData> {
     try {
       const resp = await apiClient.getDashboardStats();
       const payload = resp.data || resp;
-      const s = payload.stats || {};
+      const s = payload?.stats || {};
       return {
         stats: {
           totalPatients: s.totalPatients || 0,
@@ -49,7 +49,7 @@ export async function getAdminDashboardData(): Promise<AdminUnifiedData> {
             appointmentGrowth: undefined,
             systemHealth: undefined
         },
-        alerts: (payload.alerts || []).map((a: any, i: number) => ({
+        alerts: (payload.alerts || []).map((a: {id?: string; type?: 'error' | 'warning' | 'info'; message: string}, i: number) => ({
           id: a.id || String(i + 1),
           type: a.type || 'info',
           message: a.message,
@@ -85,7 +85,7 @@ export async function getDoctorDashboardData() {
   if (!FORCE_MOCK) {
     try {
       const resp = await apiClient.getDashboardStats();
-      const s = resp.data?.stats || {};
+      const s = resp?.data?.stats || {};
       return {
         stats: {
           totalPatients: s.totalPatients || 0,
@@ -105,7 +105,7 @@ export async function getPatientDashboardData(userId: string) {
   if (!FORCE_MOCK) {
     try {
       const resp = await apiClient.getDashboardStats();
-      const s = resp.data?.stats || {};
+      const s = resp?.data?.stats || {};
       return {
         stats: {
           upcomingAppointments: s.todaysAppointments || s.todayAppointments || 0,
@@ -127,7 +127,7 @@ export async function getReceptionistDashboardData() {
   if (!FORCE_MOCK) {
     try {
       const resp = await apiClient.getDashboardStats();
-      const s = resp.data?.stats || {};
+      const s = resp?.data?.stats || {};
       return {
         stats: {
           todaysAppointments: s.todaysAppointments || s.todayAppointments || 0,

@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { apiClient } from '@/lib/api-client'
+import { apiClient, ApiResponse } from '@/lib/api-client'
 import { AlertCircle, Loader2 } from 'lucide-react'
 
 export default function LoginPage() {
@@ -38,17 +38,17 @@ export default function LoginPage() {
     try {
       const response = await execute(() => apiClient.login(formData.email, formData.password))
       
-      if (response.success) {
+      if (response && response.success) {
         // Store auth token and user data in correct format for auth hook
-        localStorage.setItem('authToken', response.data.token)
+        localStorage.setItem('authToken', response.data?.token || '')
         
         // Store user data in the format expected by useHospitalAuth hook
         const userData = {
-          id: response.data.user.id,
-          email: response.data.user.email,
-          firstName: response.data.user.firstName,
-          lastName: response.data.user.lastName,
-          role: response.data.user.role
+          id: response.data?.user?.id || '',
+          email: response.data?.user?.email || '',
+          firstName: response.data?.user?.firstName || '',
+          lastName: response.data?.user?.lastName || '',
+          role: response.data?.user?.role || ''
           // hospitalId and department are not provided by backend yet
         }
         

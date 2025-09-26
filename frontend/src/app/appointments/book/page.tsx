@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Textarea } from '@/components/ui/textarea'
 import { Calendar, Clock, User, Stethoscope } from 'lucide-react'
-import { apiClient } from '@/lib/api-client'
+import { apiClient, ApiResponse } from '@/lib/api-client'
 
 interface Doctor {
   id: string
@@ -58,10 +58,10 @@ export default function BookAppointmentPage() {
 
   const fetchDoctors = async () => {
     try {
-      const response = await apiClient.get('/doctors')
-      if (response.data.success) {
+      const response = await apiClient.get<ApiResponse<{doctors: Doctor[]}>>('/doctors')
+      if (response && response.success) {
         // API returns { doctors: [], pagination: {} } structure
-        setDoctors(response.data.data.doctors || [])
+        setDoctors(response.data?.doctors || [])
       }
     } catch (error) {
       console.error('Error fetching doctors:', error)
@@ -107,16 +107,16 @@ export default function BookAppointmentPage() {
 
       console.log('Submitting appointment data:', appointmentData)
 
-      const response = await apiClient.post('/appointments', appointmentData)
+      const response = await apiClient.post<ApiResponse<{appointment: any}>>('/appointments', appointmentData)
       
       console.log('Appointment response:', response)
       
-      if (response.data && response.data.success) {
+      if (response && response.success) {
         alert('Appointment booked successfully!')
         router.push('/dashboard')
       } else {
         console.error('Appointment booking failed:', response)
-        alert('Failed to book appointment: ' + (response.data?.message || 'Unknown error'))
+        alert('Failed to book appointment: ' + (response?.message || 'Unknown error'))
       }
     } catch (error) {
       console.error('Error booking appointment:', error)

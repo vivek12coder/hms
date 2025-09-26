@@ -201,41 +201,7 @@ class ApiClient {
     
     return this.handleResponse<T>(response);
   }
-
-  // Authentication methods
-  async login(email: string, password: string): Promise<ApiResponse<{ token: string; user: any }>> {
-    return this.post<ApiResponse<{ token: string; user: any }>>(endpoints.auth.login, { email, password });
-  }
-
-  // Dashboard methods
-  async getDashboardStats(): Promise<ApiResponse<{
-    stats: {
-      totalPatients?: number;
-      totalDoctors?: number;
-      todaysAppointments?: number;
-      todayAppointments?: number;
-      pendingBills?: number;
-      monthlyRevenue?: number;
-      overdueBills?: number;
-    };
-    alerts?: { id?: string; type?: 'error' | 'warning' | 'info'; message: string }[];
-  }>> {
-    return this.get<ApiResponse<any>>(endpoints.dashboard.stats);
-  }
-  
-  // Rate limiting info
-  getRateLimitInfo(): { limit?: string; remaining?: string; reset?: string } | null {
-    if (typeof window === 'undefined') return null;
-    
-    // This would typically come from the last response headers
-    // We're using localStorage as a workaround to persist between requests
-    const storedInfo = localStorage.getItem('rate_limit_info');
-    return storedInfo ? JSON.parse(storedInfo) : null;
-  }
 }
 
 // Create and export a singleton instance
 export const apiClient = new ApiClient(API_BASE_URL);
-
-// Also export as default for backwards compatibility
-export default apiClient;
