@@ -7,7 +7,7 @@ COPY package*.json ./
 COPY schema.prisma ./
 
 # Install dependencies
-RUN npm ci --only=production
+RUN npm install --omit=dev
 
 # Generate Prisma client
 RUN npx prisma generate --schema=./schema.prisma
