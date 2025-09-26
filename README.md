@@ -1,103 +1,374 @@
-# Hospital Management System (HMS)
+<div align="center">
 
-## Overview
+# 🏥 Hospital Management System (HMS)
 
-A comprehensive, modern Hospital Management System built with Next.js, Express.js, and PostgreSQL. This system streamlines hospital operations with robust patient management, appointment scheduling, billing capabilities, and role-based access control with a focus on security and user experience.
+[![Next.js](https://img.shields.io/badge/Next.js-15.5.3-black?style=for-the-badge&logo=next.js)](https://nextjs.org/)
+[![React](https://img.shields.io/badge/React-19.1.0-61DAFB?style=for-the-badge&logo=react)](https://reactjs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-18+-339933?style=for-the-badge&logo=node.js)](https://nodejs.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14+-316192?style=for-the-badge&logo=postgresql)](https://postgresql.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5+-3178C6?style=for-the-badge&logo=typescript)](https://typescriptlang.org/)
+[![Prisma](https://img.shields.io/badge/Prisma-6.16.2-2D3748?style=for-the-badge&logo=prisma)](https://prisma.io/)
 
-![Hospital Management System Dashboard](https://placeholder-for-dashboard-screenshot.com/dashboard.png)
+### *Revolutionizing Healthcare Management with Modern Technology*
 
-## Features
+**A comprehensive, HIPAA-compliant Hospital Management System built with cutting-edge web technologies, featuring AI-powered insights, real-time analytics, and seamless user experience.**
 
-- **Patient Management**: Complete registration, medical history tracking, and profile management
-- **Appointment Scheduling**: Interactive calendar-based booking system with doctor availability
-- **Billing System**: Automated invoice generation, payment tracking, and financial reporting
-- **User Management**: Role-based access control (Admin, Doctor, Patient, Receptionist)
-- **Dashboard Analytics**: Real-time insights and key performance indicators
-- **Security**: JWT authentication, data encryption, audit logging, and HIPAA compliance
-- **Mobile Responsive**: Optimized for all device sizes from smartphones to large displays
+[🚀 **Live Demo**](https://hms-demo.vercel.app) • [📖 **Documentation**](https://docs.hms.com) • [🐛 **Report Bug**](https://github.com/vivek12coder/hms/issues) • [💡 **Request Feature**](https://github.com/vivek12coder/hms/issues)
 
-## Tech Stack
+---
 
-### Frontend
-- **Next.js 14+**: Modern React framework with App Router architecture
-- **React 18**: For building interactive user interfaces
-- **TypeScript**: For type safety and improved developer experience
-- **Tailwind CSS**: Utility-first CSS framework for responsive design
-- **shadcn/ui**: High-quality, accessible UI components
-- **Zod**: Type-safe form validation
-- **Sonner**: Toast notifications
-- **Lucide Icons**: Consistent, beautiful icon set
-- **React Hook Form**: Performant, flexible forms
+</div>
 
-#### Dashboard Data Source
-Dashboards first attempt to load real metrics from `GET /api/dashboard/stats` (requires auth token).
-If the request fails or you want to force mock data, create `frontend/.env.local` and add:
+## 🌟 Overview
+
+The **Hospital Management System (HMS)** is a next-generation healthcare platform designed to streamline hospital operations, enhance patient care, and ensure regulatory compliance. Built with a modern tech stack, it offers a comprehensive solution for managing patients, appointments, billing, and administrative tasks with enterprise-level security and scalability.
+
+### 🎯 **Key Highlights**
+- 🔐 **HIPAA Compliant** - Full healthcare data protection standards
+- 🎨 **Modern UI/UX** - Intuitive design with accessibility in mind
+- ⚡ **Real-time Updates** - Live notifications and data synchronization
+- 📱 **Responsive Design** - Optimized for all devices and screen sizes
+- 🔒 **Enterprise Security** - Multi-layer authentication and authorization
+- 📊 **Advanced Analytics** - AI-powered insights and reporting
+- 🌐 **Multi-tenant Ready** - Support for multiple healthcare facilities
+
+---
+
+## ✨ Features & Capabilities
+
+<table>
+<tr>
+<td width="50%">
+
+### 👥 **Patient Management**
+- Complete patient registration & profiles
+- Medical history tracking with timeline
+- Insurance management & verification
+- Emergency contact management
+- Document & report storage
+- Allergies & medication tracking
+
+### 📅 **Smart Scheduling**
+- Interactive calendar-based booking
+- Doctor availability management
+- Automated appointment reminders
+- Conflict resolution & rescheduling
+- Waitlist management
+- Multi-location support
+
+### 💰 **Billing & Finance**
+- Automated invoice generation
+- Insurance claim processing
+- Payment gateway integration
+- Financial reporting & analytics
+- Outstanding balance tracking
+- Multi-currency support
+
+</td>
+<td width="50%">
+
+### 👨‍⚕️ **Staff Management**
+- Role-based access control (RBAC)
+- Doctor scheduling & shifts
+- Staff performance analytics
+- Department management
+- Credential tracking
+- Communication tools
+
+### 📋 **Medical Records**
+- Electronic Health Records (EHR)
+- Prescription management
+- Lab results integration
+- Diagnostic imaging support
+- Treatment plan tracking
+- Audit trail maintenance
+
+### 📊 **Analytics & Reports**
+- Real-time dashboard metrics
+- Custom report generation
+- Patient flow analytics
+- Revenue optimization
+- Compliance reporting
+- Predictive insights
+
+</td>
+</tr>
+</table>
+
+---
+
+## 🏗️ Architecture & Tech Stack
+
+<div align="center">
+
+```mermaid
+graph TB
+    subgraph "Frontend Layer"
+        A[Next.js 15 App Router]
+        B[React 19 + TypeScript]
+        C[Tailwind CSS + shadcn/ui]
+        D[React Hook Form + Zod]
+    end
+    
+    subgraph "API Layer"
+        E[Express.js REST API]
+        F[JWT Authentication]
+        G[Rate Limiting + Security]
+        H[Input Validation]
+    end
+    
+    subgraph "Database Layer"
+        I[PostgreSQL Database]
+        J[Prisma ORM]
+        K[Connection Pooling]
+        L[Audit Logging]
+    end
+    
+    subgraph "Security & Compliance"
+        M[HIPAA Compliance]
+        N[Data Encryption]
+        O[RBAC Authorization]
+        P[Audit Trail]
+    end
+    
+    A --> E
+    B --> E
+    C --> E
+    D --> E
+    E --> I
+    F --> I
+    G --> I
+    H --> I
+    I --> J
+    J --> K
+    K --> L
+    M --> N
+    N --> O
+    O --> P
+```
+
+</div>
+
+### 🎯 **Frontend Technologies**
+
+| Technology | Version | Purpose | Benefits |
+|------------|---------|---------|----------|
+| **Next.js** | `15.5.3` | React Framework | Server-side rendering, routing, optimization |
+| **React** | `19.1.0` | UI Library | Component-based architecture, hooks |
+| **TypeScript** | `5+` | Language | Type safety, better developer experience |
+| **Tailwind CSS** | `4.x` | Styling | Utility-first, responsive design |
+| **shadcn/ui** | Latest | UI Components | High-quality, accessible components |
+| **React Hook Form** | `7.63.0` | Forms | Performance-optimized form handling |
+| **Zod** | `4.1.11` | Validation | Type-safe schema validation |
+| **Sonner** | `2.0.7` | Notifications | Toast notifications |
+| **Lucide React** | `0.544.0` | Icons | Beautiful, consistent icons |
+
+### ⚙️ **Backend Technologies**
+
+| Technology | Version | Purpose | Benefits |
+|------------|---------|---------|----------|
+| **Node.js** | `18+` | Runtime | Fast, scalable JavaScript runtime |
+| **Express.js** | `5.1.0` | Web Framework | Lightweight, flexible API framework |
+| **Prisma** | `6.16.2` | Database ORM | Type-safe database operations |
+| **PostgreSQL** | `14+` | Database | Robust, scalable relational database |
+| **JWT** | `9.0.2` | Authentication | Secure, stateless authentication |
+| **bcryptjs** | `3.0.2` | Password Hashing | Secure password storage |
+| **Helmet** | `8.1.0` | Security | HTTP security headers |
+| **CORS** | `2.8.5` | Cross-Origin | Secure cross-origin requests |
+
+---
+
+## 🚀 Quick Start Guide
+
+### 📋 Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+- **Node.js** `18.0.0` or higher ([Download](https://nodejs.org/))
+- **PostgreSQL** `14.0` or higher ([Download](https://postgresql.org/download/))
+- **Git** for version control ([Download](https://git-scm.com/))
+- **npm** or **yarn** package manager
+
+### 🔧 Installation
+
+1. **Clone the Repository**
+   ```bash
+   git clone https://github.com/vivek12coder/hms.git
+   cd hms
+   ```
+
+2. **Install Dependencies**
+   ```bash
+   # Backend dependencies
+   cd backend
+   npm install
+   
+   # Frontend dependencies
+   cd ../frontend
+   npm install
+   ```
+
+3. **Environment Configuration**
+
+   **Backend Environment** (`backend/.env`):
+   ```env
+   # Database Configuration
+   DATABASE_URL="postgresql://postgres:1234@localhost:5432/hospital_management?schema=public"
+   DIRECT_URL="postgresql://postgres:1234@localhost:5432/hospital_management?schema=public"
+   
+   # Authentication
+   JWT_SECRET="your-super-secure-jwt-secret-key-change-this-in-production-64-chars-minimum"
+   JWT_EXPIRES_IN="24h"
+   
+   # Server Configuration
+   NODE_ENV="development"
+   PORT="3001"
+   CORS_ORIGIN="http://localhost:3000"
+   
+   # Security & Logging
+   LOG_LEVEL="info"
+   ENABLE_AUDIT_LOGGING="true"
+   API_RATE_LIMIT="100"
+   AUTH_RATE_LIMIT="5"
+   ```
+
+   **Frontend Environment** (`frontend/.env.local`):
+   ```env
+   # API Configuration
+   NEXT_PUBLIC_API_URL="http://localhost:3001/api"
+   NEXT_PUBLIC_HOSPITAL_NAME="City General Hospital"
+   NEXT_PUBLIC_APP_ENV="development"
+   NEXT_PUBLIC_DEBUG_MODE="true"
+   
+   # Authentication
+   NEXT_PUBLIC_LOGIN_REDIRECT_URL="/dashboard"
+   NEXT_PUBLIC_LOGOUT_REDIRECT_URL="/auth/login"
+   NEXT_PUBLIC_SESSION_TIMEOUT="1440"
+   
+   # UI Configuration
+   NEXT_PUBLIC_DEFAULT_THEME="light"
+   NEXT_PUBLIC_ENABLE_APPOINTMENTS="true"
+   NEXT_PUBLIC_ENABLE_BILLING="true"
+   ```
+
+4. **Database Setup**
+   ```bash
+   cd backend
+   
+   # Generate Prisma client
+   npx prisma generate
+   
+   # Run database migrations
+   npx prisma migrate dev --name init
+   
+   # Seed with sample data
+   npx prisma db seed
+   ```
+
+5. **Start Development Servers**
+   ```bash
+   # Terminal 1: Backend API
+   cd backend
+   npm run dev
+   
+   # Terminal 2: Frontend App
+   cd frontend
+   npm run dev
+   ```
+
+6. **Access the Application**
+   - **Frontend**: [http://localhost:3000](http://localhost:3000)
+   - **Backend API**: [http://localhost:3001/api](http://localhost:3001/api)
+
+### 👤 **Test Credentials**
+
+| Role | Email | Password | Capabilities |
+|------|-------|----------|-------------|
+| **Admin** | `admin@hospital.com` | `password123` | Full system access, user management |
+| **Doctor** | `doctor@hospital.com` | `password123` | Patient records, appointments, prescriptions |
+| **Patient** | `patient@hospital.com` | `password123` | Personal data, appointments, billing |
+| **Receptionist** | `reception@hospital.com` | `password123` | Check-ins, scheduling, basic admin |
+
+---
+
+## 🏗️ Project Structure
 
 ```
-NEXT_PUBLIC_USE_MOCK_DASHBOARD=true
-```
-
-When enabled (or on error), data falls back to curated mocks in `src/lib/dashboardData.ts` via the unified loader `src/lib/dashboardDataSource.ts`. This lets UI development continue while backend endpoints evolve.
-
-### Backend
-- **Express.js**: Fast, unopinionated web framework for Node.js
-- **Prisma ORM**: Modern database toolkit for PostgreSQL
-- **PostgreSQL**: Robust, scalable relational database
-- **JWT Authentication**: Secure, stateless authentication
-- **Bcrypt**: Secure password hashing
-- **Winston**: Structured, flexible logging
-- **Zod**: Runtime validation for API requests
-- **Node.js 18+**: JavaScript runtime
-
-## Project Structure
-
-```
-/hospital_management_system
-├── /frontend                      # Next.js frontend application
-│   ├── /public                    # Static assets
-│   ├── /src
-│   │   ├── /app                   # Next.js App Router pages
-│   │   │   ├── /appointments      # Appointment management
-│   │   │   ├── /auth              # Authentication (login/register)
-│   │   │   ├── /billing           # Billing and payments
-│   │   │   ├── /dashboard         # Role-based dashboards
-│   │   │   ├── /doctors           # Doctor profiles and management
-│   │   │   ├── /patients          # Patient management
-│   │   │   ├── /prescriptions     # Prescription management
-│   │   │   └── /settings          # User and system settings
-│   │   ├── /components            # React components
-│   │   │   ├── /auth              # Authentication components
-│   │   │   ├── /dashboard         # Dashboard-specific components
-│   │   │   ├── /forms             # Form components and validators
-│   │   │   ├── /layout            # Layout components (navbar, sidebar)
-│   │   │   └── /ui                # Reusable UI components
-│   │   ├── /lib                   # Utilities and helpers
-│   │   │   ├── api-client.ts      # API client with error handling
-│   │   │   ├── auth.ts            # Authentication utilities
-│   │   │   ├── constants.ts       # Application constants
-│   │   │   ├── rbac.ts            # Role-based access control logic
-│   │   │   └── utils.ts           # Utility functions
-│   └── package.json               # Frontend dependencies
+hospital-management-system/
+├── 📁 frontend/                    # Next.js Frontend Application
+│   ├── 📁 public/                  # Static assets and files
+│   ├── 📁 src/
+│   │   ├── 📁 app/                 # Next.js App Router pages
+│   │   │   ├── 📁 appointments/    # Appointment management pages
+│   │   │   ├── 📁 auth/            # Authentication (login/register)
+│   │   │   ├── 📁 billing/         # Billing and payment pages
+│   │   │   ├── 📁 dashboard/       # Role-based dashboard views
+│   │   │   ├── 📁 doctors/         # Doctor management pages
+│   │   │   ├── 📁 patients/        # Patient management pages
+│   │   │   ├── 📁 prescriptions/   # Prescription management
+│   │   │   └── 📁 settings/        # System and user settings
+│   │   ├── 📁 components/          # Reusable React components
+│   │   │   ├── 📁 auth/            # Authentication components
+│   │   │   ├── 📁 dashboard/       # Dashboard-specific components
+│   │   │   ├── 📁 forms/           # Form components and validators
+│   │   │   ├── 📁 layout/          # Layout components (navbar, sidebar)
+│   │   │   └── 📁 ui/              # Base UI components (shadcn/ui)
+│   │   └── 📁 lib/                 # Utilities and helper functions
+│   │       ├── 📄 api-client.ts    # API client with error handling
+│   │       ├── 📄 auth.ts          # Authentication utilities
+│   │       ├── 📄 constants.ts     # Application constants
+│   │       ├── 📄 rbac.ts          # Role-based access control
+│   │       └── 📄 utils.ts         # General utility functions
+│   ├── 📄 package.json             # Frontend dependencies
+│   ├── 📄 next.config.ts           # Next.js configuration
+│   ├── 📄 tailwind.config.js       # Tailwind CSS configuration
+│   └── 📄 tsconfig.json            # TypeScript configuration
 │
-├── /backend                       # Express.js backend API
-│   ├── /src
-│   │   ├── /config                # Configuration settings
-│   │   │   └── database.js        # Database configuration
-│   │   ├── /controllers           # API controllers
-│   │   │   ├── authController.js  # Authentication endpoints
-│   │   │   ├── billingController.js # Billing endpoints
-│   │   │   ├── doctorController.js  # Doctor management
-│   │   │   └── patientController.js # Patient management
-│   │   ├── /middleware            # Express middleware
-│   │   │   ├── auth.js            # Authentication middleware
-│   │   │   ├── error.js           # Error handling middleware
-│   │   │   ├── rbac.js            # Role-based access control
-│   │   │   └── security.js        # Security middleware
-│   │   ├── /routes                # API routes
-│   │   │   ├── appointments.js    # Appointment routes
-│   │   │   ├── auth.js            # Authentication routes
-│   │   │   ├── billing.js         # Billing routes
-│   │   │   └── patients.js        # Patient routes
+├── 📁 backend/                     # Express.js Backend API
+│   ├── 📁 src/
+│   │   ├── 📁 config/              # Configuration files
+│   │   │   └── 📄 database.js      # Database connection setup
+│   │   ├── 📁 controllers/         # Request handlers and business logic
+│   │   │   ├── 📄 authController.js      # Authentication endpoints
+│   │   │   ├── 📄 billingController.js   # Billing management
+│   │   │   ├── 📄 doctorController.js    # Doctor management
+│   │   │   └── 📄 patientController.js   # Patient management
+│   │   ├── 📁 middleware/          # Express middleware functions
+│   │   │   ├── 📄 auth.js          # JWT authentication middleware
+│   │   │   ├── 📄 error.js         # Global error handling
+│   │   │   ├── 📄 rbac.js          # Role-based access control
+│   │   │   └── 📄 security.js      # Security headers and validation
+│   │   ├── 📁 routes/              # API route definitions
+│   │   │   ├── 📄 appointments.js  # Appointment management routes
+│   │   │   ├── 📄 auth.js          # Authentication routes
+│   │   │   ├── 📄 billing.js       # Billing and payment routes
+│   │   │   ├── 📄 dashboard.js     # Dashboard analytics routes
+│   │   │   ├── 📄 doctors.js       # Doctor management routes
+│   │   │   ├── 📄 patients.js      # Patient management routes
+│   │   │   └── 📄 prescriptions.js # Prescription management routes
+│   │   ├── 📁 services/            # Business logic services
+│   │   │   ├── 📄 AuditService.js        # Audit logging service
+│   │   │   ├── 📄 AuthService.js         # Authentication service
+│   │   │   ├── 📄 BillingService.js      # Billing logic service
+│   │   │   ├── 📄 DashboardService.js    # Dashboard analytics
+│   │   │   ├── 📄 DoctorService.js       # Doctor management service
+│   │   │   └── 📄 PatientService.js      # Patient management service
+│   │   ├── 📁 utils/               # Helper utilities
+│   │   │   ├── 📄 auth.js          # Authentication utilities
+│   │   │   └── 📄 logger.js        # Logging configuration
+│   │   └── 📄 server.js            # Express server initialization
+│   ├── 📄 schema.prisma            # Database schema definition
+│   ├── 📄 seed.js                  # Database seeding script
+│   ├── 📄 package.json             # Backend dependencies
+│   └── 📄 .env                     # Environment variables (not in git)
+│
+├── 📄 README.md                    # Project documentation (this file)
+├── 📄 DEPLOYMENT.md                # Deployment instructions
+├── 📄 package.json                 # Root package.json for scripts
+└── 📄 .gitignore                   # Git ignore configuration
+```
+
+---
 │   │   ├── /services              # Business logic services
 │   │   │   ├── AuditService.js    # Audit logging service
 │   │   │   ├── AuthService.js     # Authentication service
