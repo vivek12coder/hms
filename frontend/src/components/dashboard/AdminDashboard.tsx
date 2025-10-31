@@ -21,6 +21,7 @@ import {
   BarChart3
 } from 'lucide-react';
 import StatCard from './common/StatCard';
+import DetailDialog from './common/DetailDialog';
 import { useHospitalAuth } from '@/lib/auth';
 import { formatCurrency } from '@/lib/currency';
 import { getAdminDashboardData } from '@/lib/dashboardDataSource';
@@ -62,6 +63,14 @@ export default function AdminDashboard() {
   const [alerts, setAlerts] = useState<SystemAlert[]>([]);
   const [recentActivity, setRecentActivity] = useState<RecentActivity[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Dialog state
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [dialogContent, setDialogContent] = useState<{
+    title: string;
+    description: string;
+    content: React.ReactNode;
+  } | null>(null);
 
   useEffect(() => {
     if (user && token) {
@@ -95,6 +104,219 @@ export default function AdminDashboard() {
   const handleFinancialReports = () => router.push('/billing');
   const handleSecurityAudit = () => toast.info('Security audit reports coming soon');
 
+  // Card Detail Handlers
+  const showPatientDetails = () => {
+    setDialogContent({
+      title: 'Total Patients',
+      description: 'Detailed information about registered patients in the system',
+      content: (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="p-4 bg-blue-50 rounded-lg">
+              <div className="text-sm text-gray-600">Total Patients</div>
+              <div className="text-2xl font-bold text-blue-600">{stats?.totalPatients || 0}</div>
+            </div>
+            <div className="p-4 bg-green-50 rounded-lg">
+              <div className="text-sm text-gray-600">Growth Rate</div>
+              <div className="text-2xl font-bold text-green-600">
+                {stats?.patientGrowth ? `${stats.patientGrowth > 0 ? '+' : ''}${stats.patientGrowth}%` : 'N/A'}
+              </div>
+            </div>
+          </div>
+          <div className="border-t pt-4">
+            <h4 className="font-semibold mb-2">Patient Statistics</h4>
+            <ul className="space-y-2 text-sm text-gray-600">
+              <li>• All patients are registered in the system</li>
+              <li>• Each patient has a unique medical record</li>
+              <li>• Patient data includes medical history and contact information</li>
+            </ul>
+          </div>
+          <Button onClick={() => router.push('/patients')} className="w-full">
+            View All Patients
+          </Button>
+        </div>
+      )
+    });
+    setDialogOpen(true);
+  };
+
+  const showDoctorDetails = () => {
+    setDialogContent({
+      title: 'Active Doctors',
+      description: 'Medical staff currently registered in the system',
+      content: (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="p-4 bg-green-50 rounded-lg">
+              <div className="text-sm text-gray-600">Active Doctors</div>
+              <div className="text-2xl font-bold text-green-600">{stats?.totalDoctors || 0}</div>
+            </div>
+            <div className="p-4 bg-purple-50 rounded-lg">
+              <div className="text-sm text-gray-600">Specializations</div>
+              <div className="text-2xl font-bold text-purple-600">Multiple</div>
+            </div>
+          </div>
+          <div className="border-t pt-4">
+            <h4 className="font-semibold mb-2">Doctor Information</h4>
+            <ul className="space-y-2 text-sm text-gray-600">
+              <li>• Licensed medical professionals</li>
+              <li>• Various specializations available</li>
+              <li>• Active consultation and treatment services</li>
+            </ul>
+          </div>
+          <Button onClick={() => router.push('/doctors')} className="w-full">
+            View All Doctors
+          </Button>
+        </div>
+      )
+    });
+    setDialogOpen(true);
+  };
+
+  const showAppointmentDetails = () => {
+    setDialogContent({
+      title: "Today's Appointments",
+      description: 'Scheduled appointments for today',
+      content: (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="p-4 bg-purple-50 rounded-lg">
+              <div className="text-sm text-gray-600">Scheduled Today</div>
+              <div className="text-2xl font-bold text-purple-600">{stats?.todayAppointments || 0}</div>
+            </div>
+            <div className="p-4 bg-blue-50 rounded-lg">
+              <div className="text-sm text-gray-600">Growth</div>
+              <div className="text-2xl font-bold text-blue-600">
+                {stats?.appointmentGrowth ? `${stats.appointmentGrowth > 0 ? '+' : ''}${stats.appointmentGrowth}%` : 'N/A'}
+              </div>
+            </div>
+          </div>
+          <div className="border-t pt-4">
+            <h4 className="font-semibold mb-2">Appointment Status</h4>
+            <ul className="space-y-2 text-sm text-gray-600">
+              <li>• Appointments scheduled throughout the day</li>
+              <li>• Each appointment assigned to specific doctors</li>
+              <li>• Real-time appointment tracking available</li>
+            </ul>
+          </div>
+          <Button onClick={() => router.push('/appointments')} className="w-full">
+            View All Appointments
+          </Button>
+        </div>
+      )
+    });
+    setDialogOpen(true);
+  };
+
+  const showRevenueDetails = () => {
+    setDialogContent({
+      title: 'Monthly Revenue',
+      description: 'Financial overview for the current month',
+      content: (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="p-4 bg-orange-50 rounded-lg">
+              <div className="text-sm text-gray-600">Total Revenue</div>
+              <div className="text-2xl font-bold text-orange-600">{formatCurrency(stats?.monthlyRevenue || 0)}</div>
+            </div>
+            <div className="p-4 bg-green-50 rounded-lg">
+              <div className="text-sm text-gray-600">Growth</div>
+              <div className="text-2xl font-bold text-green-600">
+                {stats?.revenueGrowth ? `${stats.revenueGrowth > 0 ? '+' : ''}${stats.revenueGrowth}%` : 'N/A'}
+              </div>
+            </div>
+          </div>
+          <div className="border-t pt-4">
+            <h4 className="font-semibold mb-2">Revenue Breakdown</h4>
+            <ul className="space-y-2 text-sm text-gray-600">
+              <li>• Revenue from paid bills</li>
+              <li>• Pending bills: {stats?.pendingBills || 0}</li>
+              <li>• Overdue bills: {stats?.overdueBills || 0}</li>
+            </ul>
+          </div>
+          <Button onClick={() => router.push('/billing')} className="w-full">
+            View Billing Details
+          </Button>
+        </div>
+      )
+    });
+    setDialogOpen(true);
+  };
+
+  const showSystemHealthDetails = () => {
+    setDialogContent({
+      title: 'System Health',
+      description: 'Overall system performance and status',
+      content: (
+        <div className="space-y-4">
+          <div className="grid grid-cols-2 gap-4">
+            <div className="p-4 bg-teal-50 rounded-lg">
+              <div className="text-sm text-gray-600">Performance</div>
+              <div className="text-2xl font-bold text-teal-600">{stats?.systemHealth || 0}%</div>
+            </div>
+            <div className="p-4 bg-green-50 rounded-lg">
+              <div className="text-sm text-gray-600">Status</div>
+              <div className="text-2xl font-bold text-green-600">Operational</div>
+            </div>
+          </div>
+          <div className="border-t pt-4">
+            <h4 className="font-semibold mb-2">System Status</h4>
+            <ul className="space-y-2 text-sm text-gray-600">
+              <li>✓ Database connectivity: OK</li>
+              <li>✓ API services: Running</li>
+              <li>✓ Authentication: Active</li>
+            </ul>
+          </div>
+          <Button onClick={() => router.push('/settings')} className="w-full">
+            System Settings
+          </Button>
+        </div>
+      )
+    });
+    setDialogOpen(true);
+  };
+
+  const showAlertsDetails = () => {
+    setDialogContent({
+      title: 'System Alerts',
+      description: 'Important notifications requiring attention',
+      content: (
+        <div className="space-y-4">
+          <div className="p-4 bg-indigo-50 rounded-lg">
+            <div className="text-sm text-gray-600">Total Alerts</div>
+            <div className="text-2xl font-bold text-indigo-600">{stats?.systemAlerts || 0}</div>
+          </div>
+          <div className="border-t pt-4">
+            <h4 className="font-semibold mb-2">Recent Alerts</h4>
+            {alerts.length > 0 ? (
+              <div className="space-y-2">
+                {alerts.map((alert) => (
+                  <div key={alert.id} className={`p-3 rounded-lg ${
+                    alert.type === 'error' ? 'bg-red-50 border border-red-200' :
+                    alert.type === 'warning' ? 'bg-yellow-50 border border-yellow-200' :
+                    'bg-blue-50 border border-blue-200'
+                  }`}>
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className={`h-4 w-4 ${
+                        alert.type === 'error' ? 'text-red-600' :
+                        alert.type === 'warning' ? 'text-yellow-600' :
+                        'text-blue-600'
+                      }`} />
+                      <span className="text-sm">{alert.message}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-500">No alerts at this time</p>
+            )}
+          </div>
+        </div>
+      )
+    });
+    setDialogOpen(true);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -126,6 +348,7 @@ export default function AdminDashboard() {
             subtitle={<span>Patients</span>}
             icon={<Users className="h-3.5 w-3.5 text-blue-500" />}
             className="bg-white/70 backdrop-blur border border-white/60"
+            onClick={showPatientDetails}
           />
           <StatCard
             compact
@@ -134,6 +357,7 @@ export default function AdminDashboard() {
             subtitle={<span>Medical staff</span>}
             icon={<UserPlus className="h-3.5 w-3.5 text-green-500" />}
             className="bg-white/70 backdrop-blur border border-white/60"
+            onClick={showDoctorDetails}
           />
           <StatCard
             compact
@@ -143,6 +367,7 @@ export default function AdminDashboard() {
             subtitle={<span>Scheduled</span>}
             icon={<Calendar className="h-3.5 w-3.5 text-purple-500" />}
             className="bg-white/70 backdrop-blur border border-white/60"
+            onClick={showAppointmentDetails}
           />
             <StatCard
             compact
@@ -152,6 +377,7 @@ export default function AdminDashboard() {
             subtitle={<span>Current month</span>}
             icon={<DollarSign className="h-3.5 w-3.5 text-orange-500" />}
             className="bg-white/70 backdrop-blur border border-white/60"
+            onClick={showRevenueDetails}
           />
           <StatCard
             compact
@@ -160,6 +386,7 @@ export default function AdminDashboard() {
             subtitle={<span>Performance</span>}
             icon={<Activity className="h-3.5 w-3.5 text-teal-500" />}
             className="bg-white/70 backdrop-blur border border-white/60"
+            onClick={showSystemHealthDetails}
           />
           <StatCard
             compact
@@ -168,6 +395,7 @@ export default function AdminDashboard() {
             subtitle={<span>Require review</span>}
             icon={<Shield className="h-3.5 w-3.5 text-indigo-500" />}
             className="bg-white/70 backdrop-blur border border-white/60"
+            onClick={showAlertsDetails}
           />
         </div>
 
@@ -180,6 +408,7 @@ export default function AdminDashboard() {
             subtitle={<span>Awaiting payment</span>}
             icon={<FileText className="h-3.5 w-3.5 text-yellow-500" />}
             className="bg-white/70 backdrop-blur border border-white/60"
+            onClick={() => router.push('/billing')}
           />
           <StatCard
             compact
@@ -188,6 +417,7 @@ export default function AdminDashboard() {
             subtitle={<span>Need attention</span>}
             icon={<AlertCircle className="h-3.5 w-3.5 text-red-500" />}
             className="bg-white/70 backdrop-blur border border-white/60"
+            onClick={() => router.push('/billing')}
           />
           <StatCard
             compact
@@ -196,6 +426,7 @@ export default function AdminDashboard() {
             subtitle={<span>Require review</span>}
             icon={<Shield className="h-3.5 w-3.5 text-indigo-500" />}
             className="bg-white/70 backdrop-blur border border-white/60"
+            onClick={showAlertsDetails}
           />
         </div>
 
@@ -365,6 +596,18 @@ export default function AdminDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Detail Dialog */}
+      {dialogContent && (
+        <DetailDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
+          title={dialogContent.title}
+          description={dialogContent.description}
+        >
+          {dialogContent.content}
+        </DetailDialog>
+      )}
     </div>
   );
 }

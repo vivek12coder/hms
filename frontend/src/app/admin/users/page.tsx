@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
+import { apiClient } from '@/lib/api-client';
 
 interface User {
   id: string;
@@ -29,50 +30,30 @@ export default function ManageUsersPage() {
   const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Mock data for demonstration
-    setTimeout(() => {
-      setUsers([
-        {
-          id: '1',
-          name: 'Dr. John Smith',
-          email: 'john.smith@hospital.com',
-          role: 'DOCTOR',
-          status: 'ACTIVE',
-          lastLogin: new Date().toISOString(),
-          createdAt: new Date(Date.now() - 86400000).toISOString()
-        },
-        {
-          id: '2',
-          name: 'Sarah Johnson',
-          email: 'sarah.johnson@hospital.com',
-          role: 'NURSE',
-          status: 'ACTIVE',
-          lastLogin: new Date(Date.now() - 3600000).toISOString(),
-          createdAt: new Date(Date.now() - 172800000).toISOString()
-        },
-        {
-          id: '3',
-          name: 'Mike Admin',
-          email: 'admin@hospital.com',
-          role: 'ADMIN',
-          status: 'ACTIVE',
-          lastLogin: new Date(Date.now() - 1800000).toISOString(),
-          createdAt: new Date(Date.now() - 259200000).toISOString()
-        },
-        {
-          id: '4',
-          name: 'Emily Roberts',
-          email: 'emily.roberts@hospital.com',
-          role: 'RECEPTIONIST',
-          status: 'PENDING',
-          createdAt: new Date(Date.now() - 7200000).toISOString()
-        }
-      ]);
-      setLoading(false);
-    }, 1000);
+    fetchUsers();
   }, []);
+
+  const fetchUsers = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const response = await apiClient.get<{ success: boolean; data: User[] }>('/auth/users');
+      
+      if (response.success && response.data) {
+        setUsers(response.data);
+      } else {
+        setError('Failed to load users');
+      }
+    } catch (err) {
+      console.error('Error fetching users:', err);
+      setError('Failed to load users. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
@@ -98,6 +79,21 @@ export default function ManageUsersPage() {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <Card className="max-w-md">
+          <CardContent className="pt-6">
+            <div className="text-center">
+              <p className="text-red-600 mb-4">{error}</p>
+              <Button onClick={fetchUsers}>Try Again</Button>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     );
   }

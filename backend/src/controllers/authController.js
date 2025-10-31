@@ -3,36 +3,54 @@ const { authService } = require('../services/AuthService');
 const { auditLogger } = require('../services/AuditService');
 const { z } = require('zod');
 
-// Validation schemas
+// Validation schemas with enhanced security
 const registerSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
-  firstName: z.string().min(1),
-  lastName: z.string().min(1),
-  role: z.enum(['ADMIN', 'DOCTOR', 'PATIENT', 'RECEPTIONIST']).default('PATIENT'),
+  email: z.string().email('Invalid email format').toLowerCase().trim(),
+  password: z.string()
+    .min(8, 'Password must be at least 8 characters')
+    .max(100, 'Password too long')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one number'),
+  firstName: z.string().min(1, 'First name is required').max(50, 'First name too long').trim(),
+  lastName: z.string().min(1, 'Last name is required').max(50, 'Last name too long').trim(),
+  // Role is NOT accepted from user input - always set to PATIENT for security
+  // Only admins can create other roles through admin panel
 });
 
 const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(1),
+  email: z.string().email('Invalid email format').toLowerCase().trim(),
+  password: z.string().min(1, 'Password is required'),
 });
 
 const updateProfileSchema = z.object({
-  firstName: z.string().min(1).optional(),
-  lastName: z.string().min(1).optional(),
-  email: z.string().email().optional(),
+  firstName: z.string().min(1).max(50).trim().optional(),
+  lastName: z.string().min(1).max(50).trim().optional(),
+  email: z.string().email().toLowerCase().trim().optional(),
 });
 
 const changePasswordSchema = z.object({
-  currentPassword: z.string().min(1),
-  newPassword: z.string().min(6),
+  currentPassword: z.string().min(1, 'Current password is required'),
+  newPassword: z.string()
+    .min(8, 'New password must be at least 8 characters')
+    .max(100, 'Password too long')
+    .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+    .regex(/[a-z]/, 'Password must contain at least one lowercase letter')
+    .regex(/[0-9]/, 'Password must contain at least one number'),
 });
 
 const register = asyncHandler(async (req, res) => {
   const validatedData = registerSchema.parse(req.body);
 
+  // SECURITY: Force role to PATIENT - prevent privilege escalation
+  // Only admins can create users with other roles
+  const userData = {
+    ...validatedData,
+    role: 'PATIENT' // Always set to PATIENT regardless of input
+  };
+
   try {
-    const result = await authService.register(validatedData);
+    const result = await authService.register(userData);
 
     // Log successful registration
     await auditLogger.logAuth(

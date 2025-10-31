@@ -50,7 +50,7 @@ export default function PrescriptionRefillsPage() {
     instructions: ''
   })
 
-  // Sample medications data (in real app, this would come from backend)
+  // Fetch medications from backend
   useEffect(() => {
     fetchMedications()
   }, [])
@@ -72,40 +72,12 @@ export default function PrescriptionRefillsPage() {
           prescribedBy: prescription.prescribedBy
         }))
         setMedications(medicationsData)
+      } else {
+        setMedications([])
       }
     } catch (error) {
       console.error('Error fetching medications:', error)
-      // Fallback to sample data if API fails
-      const sampleMedications: Medication[] = [
-        {
-          id: '1',
-          name: 'Paracetamol',
-          dosage: '500mg',
-          frequency: 'Twice daily',
-          lastPrescribed: '2024-01-15',
-          remainingRefills: 2,
-          prescribedBy: 'Dr. Johnson'
-        },
-        {
-          id: '2',
-          name: 'Vitamin D3',
-          dosage: '1000 IU',
-          frequency: 'Once daily',
-          lastPrescribed: '2024-01-10',
-          remainingRefills: 1,
-          prescribedBy: 'Dr. Smith'
-        },
-        {
-          id: '3',
-          name: 'Blood Pressure Medication',
-          dosage: '5mg',
-          frequency: 'Once daily',
-          lastPrescribed: '2024-01-20',
-          remainingRefills: 3,
-          prescribedBy: 'Dr. Johnson'
-        }
-      ]
-      setMedications(sampleMedications)
+      setMedications([])
     }
   }
 

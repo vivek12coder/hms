@@ -88,7 +88,7 @@ class ApiClient {
     this.baseUrl = baseUrl;
   }
 
-  // Add auth token to headers if available
+  // Add auth token to headers if available with validation
   private getHeaders(options?: RequestOptions): HeadersInit {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -96,12 +96,25 @@ class ApiClient {
     };
 
     if (options?.token) {
-      headers.Authorization = `Bearer ${options.token}`;
+      // Validate token format before using
+      if (typeof options.token === 'string' && options.token.trim().length > 0) {
+        headers.Authorization = `Bearer ${options.token}`;
+      }
     } else if (typeof window !== 'undefined') {
-      // Try to get token from localStorage in browser environment
-      const token = localStorage.getItem('authToken');
-      if (token) {
-        headers.Authorization = `Bearer ${token}`;
+      // Try to get token from localStorage in browser environment with validation
+      try {
+        const token = localStorage.getItem('authToken');
+        if (token && typeof token === 'string' && token.trim().length > 0) {
+          // Basic JWT format validation (header.payload.signature)
+          if (token.split('.').length === 3) {
+            headers.Authorization = `Bearer ${token}`;
+          } else {
+            console.warn('Invalid token format detected, removing from storage');
+            localStorage.removeItem('authToken');
+          }
+        }
+      } catch (error) {
+        console.error('Error accessing localStorage:', error);
       }
     }
 
@@ -213,7 +226,10 @@ class ApiClient {
     lastName: string;
     email: string;
     password: string;
-    role?: string;
+    phone?: string;
+    dateOfBirth?: string;
+    gender?: string;
+    address?: string;
   }): Promise<ApiResponse<{ token: string; user: any }>> {
     return this.post<ApiResponse<{ token: string; user: any }>>(endpoints.auth.register, userData);
   }

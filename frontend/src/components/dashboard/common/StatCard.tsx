@@ -11,6 +11,7 @@ interface StatCardProps {
   className?: string;
   compact?: boolean;
   footer?: React.ReactNode;
+  onClick?: () => void;
 }
 
 export const StatCard: React.FC<StatCardProps> = ({
@@ -21,10 +22,14 @@ export const StatCard: React.FC<StatCardProps> = ({
   trend,
   className = '',
   compact = false,
-  footer
+  footer,
+  onClick
 }) => {
   return (
-    <Card className={`hover:shadow-sm transition-shadow ${className}`}>
+    <Card 
+      className={`hover:shadow-sm transition-shadow ${onClick ? 'cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all' : ''} ${className}`}
+      onClick={onClick}
+    >
       <CardHeader className={`flex flex-row items-center justify-between space-y-0 ${compact ? 'pb-1' : 'pb-2'}`}>
         <CardTitle className={`font-medium ${compact ? 'text-[11px]' : 'text-sm'}`}>{title}</CardTitle>
         {icon && <div className="text-muted-foreground">{icon}</div>}

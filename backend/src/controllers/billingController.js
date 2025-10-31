@@ -2,20 +2,50 @@ const { asyncHandler } = require('../middleware/error');
 const { billingService } = require('../services/BillingService');
 const { z } = require('zod');
 
-// Validation schemas
+// Enhanced validation schemas with security improvements
 const createBillingSchema = z.object({
-  patientId: z.string(),
-  amount: z.number().min(0),
-  description: z.string(),
-  dueDate: z.string().transform((str) => new Date(str)).optional(),
+  patientId: z.string().min(1, 'Patient ID is required').max(100),
+  amount: z.number()
+    .min(0, 'Amount cannot be negative')
+    .max(1000000, 'Amount exceeds maximum allowed')
+    .refine((val) => Number.isFinite(val), 'Invalid amount'),
+  description: z.string()
+    .min(1, 'Description is required')
+    .max(1000, 'Description too long')
+    .trim(),
+  dueDate: z.string()
+    .refine((date) => !isNaN(Date.parse(date)), 'Invalid date format')
+    .refine((date) => {
+      const dueDate = new Date(date);
+      const minDate = new Date();
+      minDate.setFullYear(minDate.getFullYear() - 1); // Max 1 year in past
+      const maxDate = new Date();
+      maxDate.setFullYear(maxDate.getFullYear() + 5); // Max 5 years in future
+      return dueDate >= minDate && dueDate <= maxDate;
+    }, 'Invalid due date range')
+    .transform((str) => new Date(str))
+    .optional(),
 });
 
 const updateBillingSchema = z.object({
-  amount: z.number().min(0).optional(),
-  description: z.string().optional(),
+  amount: z.number()
+    .min(0, 'Amount cannot be negative')
+    .max(1000000, 'Amount exceeds maximum allowed')
+    .refine((val) => Number.isFinite(val), 'Invalid amount')
+    .optional(),
+  description: z.string()
+    .min(1)
+    .max(1000)
+    .trim()
+    .optional(),
   status: z.enum(['PENDING', 'PAID', 'OVERDUE']).optional(),
-  dueDate: z.string().transform((str) => new Date(str)).optional(),
+  dueDate: z.string()
+    .refine((date) => !isNaN(Date.parse(date)), 'Invalid date format')
+    .transform((str) => new Date(str))
+    .optional(),
 });
+
+const idParamSchema = z.string().min(1, 'ID is required').max(100, 'Invalid ID format');
 
 const getAllBillings = asyncHandler(async (req, res) => {
   const billings = await billingService.getAllBillingRecords();
@@ -27,7 +57,7 @@ const getAllBillings = asyncHandler(async (req, res) => {
 });
 
 const getBillingById = asyncHandler(async (req, res) => {
-  const { id } = req.params;
+  const id = idParamSchema.parse(req.params.id);
 
   const billing = await billingService.getBillingRecordById(id);
 
@@ -45,7 +75,7 @@ const getBillingById = asyncHandler(async (req, res) => {
 });
 
 const getBillingsByPatient = asyncHandler(async (req, res) => {
-  const { patientId } = req.params;
+  const patientId = idParamSchema.parse(req.params.patientId);
 
   const billings = await billingService.getBillingRecordsByPatientId(patientId);
 

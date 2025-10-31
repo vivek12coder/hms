@@ -9,7 +9,8 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { apiClient } from '@/lib/api-client'
-import { AlertCircle, Loader2 } from 'lucide-react'
+import { AlertCircle, Loader2, CheckCircle } from 'lucide-react'
+import { toast } from 'sonner'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -19,7 +20,6 @@ export default function RegisterPage() {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'PATIENT',
     phone: '',
     dateOfBirth: '',
     gender: '',
@@ -27,6 +27,7 @@ export default function RegisterPage() {
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -34,8 +35,8 @@ export default function RegisterPage() {
     setError('')
 
     // Validate form data
-    if (formData.password.length < 6) {
-      setError('Password must be at least 6 characters long')
+    if (formData.password.length < 8) {
+      setError('Password must be at least 8 characters long')
       setLoading(false)
       return
     }
@@ -46,36 +47,53 @@ export default function RegisterPage() {
       return
     }
 
-    if (formData.role === 'PATIENT' && !formData.phone) {
-      setError('Phone number is required for patient registration')
+    // Phone number is required for patients
+    if (!formData.phone) {
+      setError('Phone number is required')
       setLoading(false)
       return
     }
 
     try {
+      // Always register as PATIENT - admin/doctor roles can only be created by admins
       const response = await apiClient.register({
         firstName: formData.firstName,
         lastName: formData.lastName,
         email: formData.email,
         password: formData.password,
-        role: formData.role,
-        ...(formData.role === 'PATIENT' && {
-          phone: formData.phone,
-          dateOfBirth: formData.dateOfBirth ? new Date(formData.dateOfBirth).toISOString() : null,
-          gender: formData.gender || null,
-          address: formData.address || null
-        })
+        phone: formData.phone,
+        dateOfBirth: formData.dateOfBirth ? new Date(formData.dateOfBirth).toISOString() : undefined,
+        gender: formData.gender || undefined,
+        address: formData.address || undefined
       })
       
       if (response.success) {
-        // Redirect to login page with success message
-        router.push('/auth/login?message=Registration successful. Please sign in.')
+        // Set success state
+        setSuccess(true)
+        
+        // Show success toast
+        toast.success('Registration Successful! 🎉', {
+          description: 'Your account has been created successfully. Redirecting to login...',
+          duration: 3000,
+        })
+        
+        // Redirect to login page after a short delay
+        setTimeout(() => {
+          router.push('/auth/login?registered=true')
+        }, 1500)
       } else {
         setError(response.message || 'Registration failed. Please try again.')
+        toast.error('Registration Failed', {
+          description: response.message || 'Please try again.',
+        })
       }
     } catch (error) {
       console.error('Registration error:', error)
-      setError(error instanceof Error ? error.message : 'Registration failed. Please try again.')
+      const errorMessage = error instanceof Error ? error.message : 'Registration failed. Please try again.'
+      setError(errorMessage)
+      toast.error('Registration Failed', {
+        description: errorMessage,
+      })
     } finally {
       setLoading(false)
     }
@@ -112,7 +130,18 @@ export default function RegisterPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
-              {error && (
+              {success && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                  <div className="flex items-center">
+                    <CheckCircle className="h-5 w-5 text-green-500" />
+                    <span className="ml-2 text-sm text-green-800">
+                      Registration successful! Redirecting to login page...
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {error && !success && (
                 <div className="bg-red-50 border border-red-200 rounded-lg p-3">
                   <div className="flex items-center">
                     <AlertCircle className="h-5 w-5 text-red-400" />
@@ -165,82 +194,60 @@ export default function RegisterPage() {
                 />
               </div>
 
+              {/* Patient fields - all users register as patients */}
               <div className="space-y-2">
-                <Label htmlFor="role">Role</Label>
-                <Select value={formData.role} onValueChange={(value) => handleSelectChange('role', value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select your role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="PATIENT">Patient</SelectItem>
-                    <SelectItem value="DOCTOR">Doctor</SelectItem>
-                    <SelectItem value="ADMIN">Admin</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="phone">Phone Number *</Label>
+                <Input
+                  id="phone"
+                  name="phone"
+                  type="tel"
+                  required
+                  value={formData.phone}
+                  onChange={handleChange}
+                  placeholder="Phone number (required)"
+                  disabled={loading}
+                />
               </div>
 
-              {/* Patient-specific fields */}
-              {formData.role === 'PATIENT' && (
-                <>
-                  <div className="space-y-2">
-                    <Label htmlFor="phone">Phone *</Label>
-                    <Input
-                      id="phone"
-                      name="phone"
-                      type="tel"
-                      required
-                      value={formData.phone}
-                      onChange={handleChange}
-                      placeholder="Phone number (required)"
-                      disabled={loading}
-                      className={formData.role === 'PATIENT' && !formData.phone ? 'border-red-500' : ''}
-                    />
-                    {formData.role === 'PATIENT' && !formData.phone && (
-                      <p className="text-sm text-red-500">Phone number is required for patient registration</p>
-                    )}
-                  </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="dateOfBirth">Date of Birth</Label>
+                  <Input
+                    id="dateOfBirth"
+                    name="dateOfBirth"
+                    type="date"
+                    value={formData.dateOfBirth}
+                    onChange={handleChange}
+                    disabled={loading}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="gender">Gender</Label>
+                  <Select value={formData.gender} onValueChange={(value) => handleSelectChange('gender', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select gender" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="MALE">Male</SelectItem>
+                      <SelectItem value="FEMALE">Female</SelectItem>
+                      <SelectItem value="OTHER">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="dateOfBirth">Date of Birth</Label>
-                      <Input
-                        id="dateOfBirth"
-                        name="dateOfBirth"
-                        type="date"
-                        value={formData.dateOfBirth}
-                        onChange={handleChange}
-                        disabled={loading}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="gender">Gender</Label>
-                      <Select value={formData.gender} onValueChange={(value) => handleSelectChange('gender', value)}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select gender" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="MALE">Male</SelectItem>
-                          <SelectItem value="FEMALE">Female</SelectItem>
-                          <SelectItem value="OTHER">Other</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="address">Address</Label>
-                    <Input
-                      id="address"
-                      name="address"
-                      type="text"
-                      value={formData.address}
-                      onChange={handleChange}
-                      placeholder="Your address"
-                      disabled={loading}
-                    />
-                  </div>
-                </>
-              )}
+              <div className="space-y-2">
+                <Label htmlFor="address">Address</Label>
+                <Input
+                  id="address"
+                  name="address"
+                  type="text"
+                  value={formData.address}
+                  onChange={handleChange}
+                  placeholder="Your address"
+                  disabled={loading}
+                />
+              </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -250,15 +257,15 @@ export default function RegisterPage() {
                     name="password"
                     type="password"
                     required
-                    minLength={6}
+                    minLength={8}
                     value={formData.password}
                     onChange={handleChange}
-                    placeholder="Password (min. 6 characters)"
+                    placeholder="Password (min. 8 characters)"
                     disabled={loading}
-                    className={formData.password.length > 0 && formData.password.length < 6 ? 'border-red-500' : ''}
+                    className={formData.password.length > 0 && formData.password.length < 8 ? 'border-red-500' : ''}
                   />
-                  {formData.password.length > 0 && formData.password.length < 6 && (
-                    <p className="text-sm text-red-500">Password must be at least 6 characters long</p>
+                  {formData.password.length > 0 && formData.password.length < 8 && (
+                    <p className="text-sm text-red-500">Password must be at least 8 characters long</p>
                   )}
                 </div>
                 <div className="space-y-2">
@@ -268,7 +275,7 @@ export default function RegisterPage() {
                     name="confirmPassword"
                     type="password"
                     required
-                    minLength={6}
+                    minLength={8}
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     placeholder="Confirm password"
@@ -284,9 +291,14 @@ export default function RegisterPage() {
               <Button 
                 type="submit" 
                 className="w-full" 
-                disabled={loading}
+                disabled={loading || success}
               >
-                {loading ? (
+                {success ? (
+                  <>
+                    <CheckCircle className="w-4 h-4 mr-2" />
+                    Success! Redirecting...
+                  </>
+                ) : loading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Creating account...

@@ -141,7 +141,7 @@ class DashboardService {
         monthlyRevenue: monthlyRevenue._sum.amount || 0,
         pendingBillsAmount: pendingBillsAmount._sum.amount || 0,
         overdueBills: overdueAlerts,
-        cancelledAppointments: cancelledBills
+        cancelledAppointments: cancelledBills || 0
       };
 
       // Transform recent appointments data from billing records
@@ -166,10 +166,10 @@ class DashboardService {
         });
       }
 
-      if (cancelledAppointments > 0) {
+      if (cancelledBills > 0) {
         alerts.push({
           id: '2',
-          message: `${cancelledAppointments} appointments were cancelled this week`,
+          message: `${cancelledBills} appointments were cancelled this week`,
           type: 'warning'
         });
       }

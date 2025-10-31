@@ -2,23 +2,36 @@
 
 import { useState, useEffect } from 'react'
 import { useFormFeedback } from '@/lib/hooks/useFormFeedback'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { apiClient, ApiResponse } from '@/lib/api-client'
-import { AlertCircle, Loader2 } from 'lucide-react'
+import { AlertCircle, Loader2, CheckCircle } from 'lucide-react'
+import { toast } from 'sonner'
 
 export default function LoginPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   })
   // useFormFeedback provides loading, error & rate-limit metadata
   const { loading: submitting, error, attemptsRemaining, retryAfter, locked, execute } = useFormFeedback()
+
+  // Check for registration success message
+  useEffect(() => {
+    const registered = searchParams.get('registered')
+    if (registered === 'true') {
+      toast.success('Welcome!', {
+        description: 'Your account has been created successfully. Please login to continue.',
+        duration: 4000,
+      })
+    }
+  }, [searchParams])
 
   // Simple countdown for rate limit retry (client-side only; not perfectly accurate but good UX)
   // Local countdown mirror if backend provided retryAfter
@@ -53,8 +66,6 @@ export default function LoginPage() {
         }
         
         localStorage.setItem('user', JSON.stringify(userData))
-        
-        console.log('Login successful, stored user data:', userData)
         
         // Force page reload to trigger auth state update
         window.location.href = '/dashboard'
@@ -150,46 +161,6 @@ export default function LoginPage() {
                   Sign up
                 </Link>
               </p>
-            </div>
-
-            <div className="mt-4 p-3 bg-blue-50 rounded-lg">
-              <p className="text-sm text-blue-800 font-medium mb-2">Demo Accounts:</p>
-              <div className="space-y-2">
-                <div className="flex gap-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => setFormData({email: 'admin@hospital.com', password: 'admin123'})}
-                  >
-                    Admin
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => setFormData({email: 'doctor@hospital.com', password: 'doctor123'})}
-                  >
-                    Doctor
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => setFormData({email: 'patient@hospital.com', password: 'patient123'})}
-                  >
-                    Patient
-                  </Button>
-                </div>
-                <div className="text-xs text-blue-600">
-                  <p>• Admin: admin@hospital.com / admin123</p>
-                  <p>• Doctor: doctor@hospital.com / doctor123</p>
-                  <p>• Patient: patient@hospital.com / patient123</p>
-                </div>
-              </div>
             </div>
           </CardContent>
         </Card>

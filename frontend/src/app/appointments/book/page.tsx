@@ -105,17 +105,12 @@ export default function BookAppointmentPage() {
         notes: formData.notes
       }
 
-      console.log('Submitting appointment data:', appointmentData)
-
       const response = await apiClient.post<ApiResponse<{appointment: any}>>('/appointments', appointmentData)
-      
-      console.log('Appointment response:', response)
       
       if (response && response.success) {
         alert('Appointment booked successfully!')
         router.push('/dashboard')
       } else {
-        console.error('Appointment booking failed:', response)
         alert('Failed to book appointment: ' + (response?.message || 'Unknown error'))
       }
     } catch (error) {

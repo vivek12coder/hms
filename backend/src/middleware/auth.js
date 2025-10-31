@@ -1,47 +1,114 @@
 const jwt = require('jsonwebtoken');
+const { logger } = require('../utils/logger');
 
 const auth = async (req, res, next) => {
   try {
-    const token = req.header('Authorization')?.replace('Bearer ', '');
+    const authHeader = req.header('Authorization');
+    
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ 
+        success: false,
+        error: 'Access denied. Invalid authorization header.' 
+      });
+    }
+
+    const token = authHeader.replace('Bearer ', '').trim();
 
     if (!token) {
-      return res.status(401).json({ error: 'Access denied. No token provided.' });
+      return res.status(401).json({ 
+        success: false,
+        error: 'Access denied. No token provided.' 
+      });
     }
 
     const secret = process.env.JWT_SECRET;
     if (!secret) {
-      throw new Error('JWT_SECRET is not configured');
+      logger.error('JWT_SECRET is not configured');
+      return res.status(500).json({ 
+        success: false,
+        error: 'Server configuration error.' 
+      });
     }
 
-    const decoded = jwt.verify(token, secret);
+    // Verify token with additional checks
+    const decoded = jwt.verify(token, secret, {
+      algorithms: ['HS256'], // Explicitly specify allowed algorithms
+      maxAge: '24h' // Enforce maximum token age
+    });
+
+    // Validate decoded token structure
+    if (!decoded.id || !decoded.email || !decoded.role) {
+      return res.status(401).json({ 
+        success: false,
+        error: 'Invalid token structure.' 
+      });
+    }
+
     req.user = {
-      id: decoded.userId || decoded.id,
+      id: decoded.id,
       email: decoded.email,
       role: decoded.role
     };
+    
     next();
   } catch (error) {
-    res.status(401).json({ error: 'Invalid token.' });
+    if (error.name === 'TokenExpiredError') {
+      return res.status(401).json({ 
+        success: false,
+        error: 'Token expired. Please login again.' 
+      });
+    }
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ 
+        success: false,
+        error: 'Invalid token.' 
+      });
+    }
+    logger.error('Authentication error:', error);
+    return res.status(401).json({ 
+      success: false,
+      error: 'Authentication failed.' 
+    });
   }
 };
 
-// Simplified auth - no role restrictions, anyone authenticated can access
-const authorize = () => {
+// Role-based authorization middleware with proper enforcement
+const authorize = (allowedRoles = []) => {
   return (req, res, next) => {
     if (!req.user) {
-      return res.status(401).json({ error: 'Access denied. Please authenticate.' });
+      return res.status(401).json({ 
+        success: false,
+        error: 'Access denied. Please authenticate.' 
+      });
     }
-    // No role checking - anyone logged in can access
+
+    // If no roles specified, just check authentication
+    if (!allowedRoles.length) {
+      return next();
+    }
+
+    // Check if user has required role
+    const rolesArray = Array.isArray(allowedRoles) ? allowedRoles : [allowedRoles];
+    
+    if (!rolesArray.includes(req.user.role)) {
+      logger.warn(`Unauthorized access attempt by ${req.user.email} (${req.user.role}) to endpoint requiring ${rolesArray.join(', ')}`);
+      return res.status(403).json({ 
+        success: false,
+        error: 'Access denied. Insufficient permissions.' 
+      });
+    }
+    
     next();
   };
 };
 
-// Simplified exports - no role restrictions
-const adminOnly = authorize();
-const doctorOnly = authorize();
-const patientOnly = authorize();
-const doctorOrAdmin = authorize();
-const authenticatedUser = authorize();
+// Role-specific middleware with proper enforcement
+const adminOnly = authorize(['ADMIN']);
+const doctorOnly = authorize(['DOCTOR']);
+const patientOnly = authorize(['PATIENT']);
+const receptionistOnly = authorize(['RECEPTIONIST']);
+const doctorOrAdmin = authorize(['DOCTOR', 'ADMIN']);
+const authenticatedUser = authorize(); // Just check authentication
 
 module.exports = {
   auth,

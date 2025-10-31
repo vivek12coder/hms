@@ -107,9 +107,6 @@ export default function PatientsPage() {
 
   const fetchPatients = async () => {
     const currentToken = localStorage.getItem('authToken');
-    console.log('=== Debug fetchPatients ===');
-    console.log('authToken state:', authToken ? 'EXISTS' : 'MISSING');
-    console.log('localStorage token:', currentToken ? 'EXISTS' : 'MISSING');
     
     if (!currentToken) {
       setError('Authentication token not found in storage');
@@ -128,13 +125,11 @@ export default function PatientsPage() {
       setLoading(true);
       setError(null);
       
-      console.log('Making API call to getPatients...');
       const response = await apiClient.getPatients({
         page: 1,
         limit: 50, // Get more patients for now
         search: searchTerm || undefined
       });
-      console.log('API Response:', response);
       
       let patientsData: Patient[] = [];
       

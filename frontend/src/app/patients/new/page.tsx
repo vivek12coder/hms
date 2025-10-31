@@ -30,7 +30,6 @@ export default function NewPatientPage() {
   const handleSubmit = async (data: PatientFormData) => {
     setIsLoading(true);
     try {
-      console.log('Patient data:', data);
       // Here you would make an API call to create the patient
       // await api.post('/patients', data);
       

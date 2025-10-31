@@ -36,17 +36,31 @@ app.use(securityHeadersMiddleware);
 app.use(inputSanitationMiddleware);
 app.use(sessionSecurityMiddleware);
 
-// CORS configuration
+// Enhanced CORS configuration with validation
+const allowedOrigins = [
+  process.env.CORS_ORIGIN || 'http://localhost:3000',
+  'http://localhost:3002',
+  'http://localhost:3001'
+].filter(Boolean);
+
 const corsOptions = {
-  origin: [
-    process.env.CORS_ORIGIN || 'http://localhost:3000',
-    'http://localhost:3002',
-    'http://localhost:3001'
-  ],
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, Postman, etc.)
+    if (!origin) return callback(null, true);
+    
+    // Check if origin is in allowed list
+    if (allowedOrigins.some(allowed => origin.startsWith(allowed.replace(/\/$/, '')))) {
+      callback(null, true);
+    } else {
+      logger.warn(`Blocked CORS request from origin: ${origin}`);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
   allowedHeaders: ['Content-Type', 'Authorization'],
   credentials: true,
-  optionsSuccessStatus: 200
+  optionsSuccessStatus: 200,
+  maxAge: 86400 // 24 hours
 };
 app.use(cors(corsOptions));
 
@@ -55,8 +69,14 @@ app.use(morgan('combined', {
   stream: { write: (message) => logger.info(message.trim()) }
 }));
 
-// Body parsing middleware
-app.use(express.json({ limit: '10mb' }));
+// Body parsing middleware with size limits for security
+app.use(express.json({ 
+  limit: '10mb',
+  verify: (req, res, buf) => {
+    // Store raw body for webhook signature verification if needed
+    req.rawBody = buf.toString('utf8');
+  }
+}));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Rate limiting
