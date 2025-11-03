@@ -13,7 +13,9 @@
 
 **A comprehensive, secure Hospital Management System built with cutting-edge web technologies, featuring real-time analytics, role-based access control, and seamless user experience.**
 
-[ **Report Bug**](https://github.com/vivek12coder/hms/issues) • [💡 **Request Feature**](https://github.com/vivek12coder/hms/issues)
+📚 **[Getting Started](./docs/GETTING-STARTED.md)** • 📖 **[API Docs](./docs/API-DOCUMENTATION.md)** • 🚀 **[Deployment](./docs/DEPLOYMENT.md)** • 📊 **[Overview](./docs/PROJECT-OVERVIEW.md)**
+
+[🐛 **Report Bug**](https://github.com/vivek12coder/hms/issues) • [💡 **Request Feature**](https://github.com/vivek12coder/hms/issues)
 
 ---
 
