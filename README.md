@@ -15,6 +15,8 @@
 
 📚 **[Getting Started](./docs/GETTING-STARTED.md)** • 📖 **[API Docs](./docs/API-DOCUMENTATION.md)** • 🚀 **[Deployment](./docs/DEPLOYMENT.md)** • 📊 **[Overview](./docs/PROJECT-OVERVIEW.md)**
 
+🚢 **[Deploy to Vercel + Render](./QUICK-DEPLOY.md)** • ✅ **[Deployment Checklist](./DEPLOYMENT-CHECKLIST.md)**
+
 [🐛 **Report Bug**](https://github.com/vivek12coder/hms/issues) • [💡 **Request Feature**](https://github.com/vivek12coder/hms/issues)
 
 ---

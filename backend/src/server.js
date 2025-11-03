@@ -3,8 +3,20 @@ const cors = require('cors');
 const morgan = require('morgan');
 const dotenv = require('dotenv');
 
+// Load environment variables first
+dotenv.config();
+
+// Validate environment variables (production-ready)
+const { validateEnv, isProduction } = require('./utils/env-validator');
+try {
+  validateEnv();
+} catch (error) {
+  console.error('❌ Environment validation failed:', error.message);
+  process.exit(1);
+}
+
 const { errorHandler } = require('./middleware/error');
-const { logger } = require('./utils/logger');
+const { logger } = require('./utils/logger-enhanced');
 const {
   securityHeadersMiddleware,
   apiRateLimiter,
@@ -21,9 +33,6 @@ const billingRoutes = require('./routes/billing');
 const dashboardRoutes = require('./routes/dashboard');
 const appointmentRoutes = require('./routes/appointments');
 const prescriptionRoutes = require('./routes/prescriptions');
-
-// Load environment variables first
-dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 3001;

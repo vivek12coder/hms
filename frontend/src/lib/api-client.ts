@@ -139,6 +139,26 @@ class ApiClient {
       const apiResponse = data as { message?: string };
       const errorMessage = apiResponse?.message || `Error: ${response.status} ${response.statusText}`;
       
+      // Handle authentication errors (token expired or invalid)
+      if (response.status === 401 && typeof window !== 'undefined') {
+        console.warn('Authentication failed - token expired or invalid');
+        
+        // Clear expired token from storage
+        try {
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('userRole');
+          localStorage.removeItem('user');
+        } catch (error) {
+          console.error('Error clearing auth data:', error);
+        }
+        
+        // Only redirect if we're not already on the login page
+        if (!window.location.pathname.includes('/auth/login')) {
+          console.log('Redirecting to login page...');
+          window.location.href = '/auth/login?expired=true';
+        }
+      }
+      
       // Handle rate limiting
       let retryAfter: number | undefined;
       if (response.status === 429) {

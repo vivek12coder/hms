@@ -25,10 +25,19 @@ export default function LoginPage() {
   // Check for registration success message
   useEffect(() => {
     const registered = searchParams.get('registered')
+    const expired = searchParams.get('expired')
+    
     if (registered === 'true') {
       toast.success('Welcome!', {
         description: 'Your account has been created successfully. Please login to continue.',
         duration: 4000,
+      })
+    }
+    
+    if (expired === 'true') {
+      toast.error('Session Expired', {
+        description: 'Your session has expired. Please login again to continue.',
+        duration: 5000,
       })
     }
   }, [searchParams])
