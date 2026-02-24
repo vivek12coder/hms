@@ -1,0 +1,50 @@
+name: Smart Auto Commit with AI Tech Quote
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"   # every 30 minutes
+  workflow_dispatch:
+
+jobs:
+  auto-commit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure Git
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+
+      - name: Generate AI-style tech quote
+        run: |
+          DATE=$(date '+%Y-%m-%d')
+          TIME=$(date '+%H:%M:%S UTC')
+
+          mkdir -p auto
+          FILE="auto/activity-$DATE.md"
+
+          SUBJECTS=("Code" "AI" "Technology" "Software" "Engineering" "Automation")
+          VERBS=("empowers" "transforms" "scales" "optimizes" "redefines" "accelerates")
+          OBJECTS=("innovation" "problem solving" "human potential" "systems" "productivity" "the future")
+          ENDINGS=("when done right." "through simplicity." "with consistency." "by design." "at scale." "every day.")
+
+          S=${SUBJECTS[$RANDOM % ${#SUBJECTS[@]}]}
+          V=${VERBS[$RANDOM % ${#VERBS[@]}]}
+          O=${OBJECTS[$RANDOM % ${#OBJECTS[@]}]}
+          E=${ENDINGS[$RANDOM % ${#ENDINGS[@]}]}
+
+          AI_QUOTE="$S $V $O $E"
+
+          echo "### ⏱️ $TIME" >> $FILE
+          echo "- 🔄 Auto workflow heartbeat" >> $FILE
+          echo "- 🤖 AI Tech Quote: \"$AI_QUOTE\"" >> $FILE
+          echo "" >> $FILE
+
+      - name: Commit & Push
+        run: |
+          git add auto/
+          git commit -m "Auto log + AI tech quote $(date '+%Y-%m-%d %H:%M')" || echo "No changes"
+          git push
